@@ -1,11 +1,24 @@
+import os, sys
+import argparse, configparser
 import logging
 from logging.handlers import RotatingFileHandler
+
+from tests.test_graph import *
+
+from entity_factory import EntityFactory
 
 from graph import Graph
 from person import Person
 from entity import RelationshipType
 
 def main():
+    """
+    A program to generate fictional entities (people, places, organisations, and the connections between them) 
+    at random based on user specified parameters against either the default dictionaries of attributes or one 
+    passed to the program at runtime. 
+    """
+
+    '''Setup Logging'''
     logger = logging.getLogger(__name__)
     
     #Create logging handlers
@@ -23,71 +36,75 @@ def main():
     logger.addHandler(console_handler)
     logger.addHandler(rotating_file_handler)
 
-    entities: Graph = Graph()
-    person_a: Person = Person(first_name="Harry", last_name="Potter", description=None, age=11)
-    person_b: Person = Person(first_name="James", last_name="Potter", description=None)
-    person_c: Person = Person(first_name="Lily", last_name="Potter", description=None)
+    '''Setup Command Line Argument Parsing'''
+    parser = argparse.ArgumentParser(description='Description of your program')
 
-    person_d: Person = Person(first_name="Sirius", last_name="Black", description=None)
-    person_e: Person = Person(first_name="Hermione", last_name="Granger", description=None)
-    person_f: Person = Person(first_name="Daphne", last_name="Greengrass", description=None)
+    # Add arguments
+    parser.add_argument('-f', '--file', help='Path to the input file')
+    parser.add_argument('-v', '--verbose', help='Increase output verbosity', action='store_true')
+    parser.add_argument('--option1', type=str, help='Option 1 description')
+    parser.add_argument('--option2', type=int, default=10, help='Option 2 description')
 
-    person_g: Person = Person(first_name="Aberforth", last_name="Dumbledore", description=None)
-    person_h: Person = Person(first_name="Poppy", last_name="Pomfrey", description=None)
+    # Parse arguments
+    args = parser.parse_args()
 
-    person_i: Person = Person(first_name="Dudley", last_name="Dursley", description=None)
-    person_j: Person = Person(first_name="Cho", last_name="Chang", description=None)
-    
-    person_x: Person = Person(first_name="Draco", last_name="Malfoy", description=None)
-    person_y: Person = Person(first_name="Lucius", last_name="Malfoy", description=None)
-    person_z: Person = Person(first_name="Tom", last_name="Riddle", description=None)
+    # Access parsed arguments
+    print(f"Command line args: {args.file}") # TODO: Keep this but change to logging
+    if args.verbose:
+        print('Verbose mode enabled') # TODO: Keep this but change to logging
 
-    entities.add_edge(person_a, person_b)
-    entities.add_edge(person_a, person_c)
-    entities.add_edge(person_b, person_c)
+    '''Setup Config File Parsing'''
 
-    entities.add_edge(person_a, person_e)
-    entities.add_edge(person_a, person_f)
-    entities.add_edge(person_a, person_d)
-    entities.add_edge(person_b, person_d)
+    # Read config file (if it exists)
+    config = configparser.ConfigParser()
+    config.read('config.ini')
 
-    entities.add_edge(person_x, person_y)
-    entities.add_edge(person_x, person_z)
-    entities.add_edge(person_y, person_z)
-    entities.add_edge(person_a, person_z)
-    entities.add_edge(person_a, person_x)
-    entities.add_edge(person_a, person_y)
+    # Update config with command line arguments
+    if 'main' not in config:
+        config['main'] = {}
+    if args.option1:
+        config['main']['option1'] = args.option1
+    if args.option2:
+        config['main']['option2'] = str(args.option2)
 
-    entities.add_node(person_g)
-    entities.add_node(person_h)
+    # Write updated config to file
+    with open('config.ini', 'w') as configfile:
+        config.write(configfile)
 
-    entities.add_metadata(person_a, person_b, metadata={"type": RelationshipType.CHILD, "details": "Harry looks strikingly like his father."})
-    entities.add_metadata(person_b, person_a, metadata={"type": RelationshipType.PARENT, "details": "James never got to see Harry grow up."})
-    entities.add_metadata(person_b, person_c, metadata={"type": RelationshipType.SPOUSE})
-    entities.add_metadata(person_c, person_b, metadata={"type": RelationshipType.SPOUSE})
-    entities.add_metadata_reciprocal(person_b, person_d, metadata={"type": RelationshipType.FRIEND})
-    entities.add_metadata2(person_a, person_e, metadata1={"type": RelationshipType.FRIEND}, metadata2={"type": RelationshipType.CRUSH})
+    # Use the options
+    print(f"Config file args:")
+    print("Option 1:", config['main'].get('option1'))
+    print("Option 2:", config['main'].getint('option2'))
 
-    entities.add(person_a, person_i, metadata1={"type": RelationshipType.COUSIN}, metadata2={"type": RelationshipType.COUSIN})
-    entities.add(person_a, person_j, metadata1={"type": RelationshipType.CRUSH})
+    '''Setup Text Menu Interface for Program Operation and Testing'''
+    use_commandline_interface: bool = True
 
-    print(f"Connections for {person_a.name}: ")
-    for entity in entities.get_adjacent_nodes(person_a):
-        print(f"{entity}")
+    while use_commandline_interface:
+        print("\nMenu:")
+        print("1. Test Graph with Person objects")
+        print("2. Create Random Person")
+        print("3. Exit")
 
-    print(f"---------------------------------")
-    print(f"Metadata for {person_a.name}: ")
-    for key, value in entities.get_metadata(person_a): 
-        print(f"{key[0].name}->{key[1].name}: {value}")
+        choice = input("\nEnter your choice: ")
 
-    print(f"---------------------------------")
-    print(f"All Metadata: ")
-    for key, value in entities.metadata.items():
-        print(f"{key[0].name}->{key[1].name}: {value}")
+        if choice == "1":
+            test_graph_with_person()
+        elif choice == "2":
+            person = create_random_person()
+            print(person)
+        elif choice == "3":
+            sys.exit("Exiting the program.")
+        else:
+            print("Invalid choice. Please try again.")
 
-    print(f"---------------------------------")
-    print(f"Unconnected nodes: ")
-    print(entities.unconnected_nodes())
+def create_random_person() -> Person:
+    print(f"Executing {create_random_person.__name__}...") # TODO: Make this logging
+    # Create an instance of the factory
+    factory = EntityFactory([Person])
+
+    # Generate random entities
+    person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")
+    return person
 
 if __name__ == "__main__":
     main()

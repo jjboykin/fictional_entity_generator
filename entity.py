@@ -17,7 +17,7 @@ class RelationshipType(Enum):
 class Entity():
     id: uuid.UUID = field(default=None)
     name: str
-    description: str
+    description: str = field(default=None)
 
     def __post_init__(self):
         object.__setattr__(self, "id", uuid.uuid4())

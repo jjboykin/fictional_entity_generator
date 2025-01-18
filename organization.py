@@ -1,0 +1,34 @@
+from dataclasses import dataclass, field
+from enum import Enum
+from entity import Entity
+
+class OrganizationType(Enum):
+    GUILD = 1
+    RELIGION = 2
+    CORPORATION = 3
+    MILITARY = 4
+    SCHOOL = 5
+    GOVERNMENT = 6
+
+class OrganizationAttributes(Enum):
+    POLITICAL = 1
+    SOCIAL = 2
+    ECONOMIC = 3
+    RELIGIOUS = 4
+    ACADEMIC = 5
+    TRADE = 6
+    CRIMINAL = 7
+    TECHNOLOGICAL = 8
+    MAGICAL = 9 
+
+@dataclass(frozen=True, kw_only=True)
+class Organization(Entity):
+    type: OrganizationType = field(default=OrganizationType.GOVERNMENT)
+    #leader: Person - connected by graph
+    members: int = field(default=None)
+    attributes: set[OrganizationAttributes] = field(default=None)
+    #headquarters: LocationID - connected by graph
+    
+    # Policies	PolicyID, OrganizationID, Name, Type (taxation, trade, military), Impact (social/environmental/etc.)
+    # Factions	FactionID, OrganizationID, Name, Alignment, PowerLevel
+    # Relations	RelationID, OrganizationID1, OrganizationID2, Type (ally/rival/enemy), Status

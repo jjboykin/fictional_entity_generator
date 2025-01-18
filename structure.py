@@ -15,3 +15,5 @@ class StructureAttributes(Enum):
 class Structure(Entity):
     attributes: dict[StructureAttributes, bool] = field(default=None)
     
+    def __post_init__(self):
+        super().__post_init__()

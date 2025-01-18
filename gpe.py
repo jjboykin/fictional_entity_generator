@@ -20,3 +20,6 @@ class GeoPoliticalEntity(Entity):
     # Key Metrics
     # For Locations: Population growth, resource exploitation, environmental changes.
     # For Organizations: Influence, stability, conflicts, and alliances.
+
+    def __post_init__(self):
+        super().__post_init__()

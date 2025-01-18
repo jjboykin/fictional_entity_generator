@@ -37,3 +37,6 @@ class Location(Entity):
 
     # Resources	ResourceID, LocationID, Type (water, ore, crops), Quantity, Quality
     # Infrastructure	InfrastructureID, LocationID, Type (roads, spaceports, trade hubs), Status
+
+    def __post_init__(self):
+        super().__post_init__()

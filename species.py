@@ -13,4 +13,7 @@ class SpeciesAttributes(Enum):
 @dataclass(frozen=True, kw_only=True)
 class Species(Entity):
     attributes: dict[SpeciesAttributes, bool] = field(default=None)
+
+    def __post_init__(self):
+        super().__post_init__()
     

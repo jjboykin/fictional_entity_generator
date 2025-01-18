@@ -13,4 +13,6 @@ class Person(Species):
         if not self.first_name or not self.last_name:
             raise ValueError("First and last name are required fields")
         
+        super().__post_init__()
+        
         object.__setattr__(self, "name", f"{self.first_name} {self.last_name}")

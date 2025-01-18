@@ -32,3 +32,6 @@ class Organization(Entity):
     # Policies	PolicyID, OrganizationID, Name, Type (taxation, trade, military), Impact (social/environmental/etc.)
     # Factions	FactionID, OrganizationID, Name, Alignment, PowerLevel
     # Relations	RelationID, OrganizationID1, OrganizationID2, Type (ally/rival/enemy), Status
+
+    def __post_init__(self):
+        super().__post_init__()

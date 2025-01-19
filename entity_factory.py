@@ -12,4 +12,5 @@ class EntityFactory:
 
     def create_random_entity(self, **kwargs):
         entity_type = random.choice(self.entity_types)
+        # ?
         return entity_type(**kwargs)

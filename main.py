@@ -81,8 +81,9 @@ def main():
 
     # Access parsed arguments
     if args.save_config and args.reset_config:
-        # TODO: Add logging for config flag conflict
-        raise Exception ("Save config and reset config flags are mutually exclusive.")
+        e = Exception ("Save config and reset config flags are mutually exclusive.")
+        logger.error(f"Exception: {e}")
+        raise e
 
     if args.reset_config:
         # Write the config with defaults before reading
@@ -113,42 +114,47 @@ def main():
             config['main']['output'] = args.output
             results_output_mode = OutputMode(args.output)
         else:
-            # TODO: log error ("Invalid output mode.") but continue with config option
+            w = Exception ("Invalid output mode parameter; continuing with configured option.")
+            logger.warning(f"Exception: {w}")
             if config['main']['output']:
                 if is_valid_results_output_mode(config['main']['output']):
                     results_output_mode = OutputMode(config['main']['output'])
                 else:
-                    # TODO: log error ("Invalid configured output mode.") but continue with default option
-                    pass
+                    w = Exception ("Invalid configured output mode; continuing with default option.")
+                    logger.warning(f"Exception: {w}")
             else:
-                # TODO: log error ("No configured output mode.") but continue with default option
-                pass
+                w = Exception ("No configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
     
     if args.outfile_format:
         if is_valid_results_outfile_format(args.outfile_format):
             config['main']['outfile_format'] = args.outfile_format
             results_outfile_format = OutputResultsFileFormat(args.outfile_format)
         else:
-            # TODO: log error ("Invalid outfile format.") but continue with config option
+            w = Exception ("Invalid outfile format; continuing with configured option.")
+            logger.warning(f"Exception: {w}")
             if config['main']['outfile_format']:
                 if is_valid_results_outfile_format(config['main']['outfile_format']):
                     results_outfile_format = OutputResultsFileFormat(config['main']['outfile_format'])
                 else:
-                    # TODO: log error ("Invalid configured outfile format.") but continue with default option
-                    pass
+                    w = Exception ("Invalid configured outfile format; continuing with default option.")
+                    logger.warning(f"Exception: {w}")
             else:
-                # TODO: log error ("No configured outfile format.") but continue with default option
-                pass
+                w = Exception ("No configured outfile format; continuing with default option.")
+                logger.warning(f"Exception: {w}")
 
     # Main arguments NOT in config
     if args.file:
         input_file_path = args.file
         if is_valid_input_options_file(input_file_path):
-            # TODO: Handle file read into table object memory
-            read_input_options_file(input_file_path)
+            try:
+                read_input_options_file(input_file_path)
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                return None
         else:
-            # TODO: log error ("Invalid input file format.") but continue with standard options
-            pass
+            w = Exception ("Invalid input file format; continuing with standard options.")
+            logger.warning(f"Exception: {w}")
 
     if args.outfile_name:
         # Parse args.outfile_name and strip extension (if any) from file name
@@ -220,26 +226,20 @@ def main():
             sys.exit("Exiting the program.")
         if choice.upper() == "T":
             menu_page = "test"
-            #generate_menu(entities, tracker, menu_page)
         if choice.upper() == "M":
             menu_page = "main"
-            #generate_menu(entities, tracker, menu_page)
 
         match menu_page:
             case "main":
                 if choice == "1":
                     menu_page = "entity_create"
-                    #generate_menu(entities, tracker, menu_page)
                 elif choice == "2":
                     menu_page = "entity_view"
-                    #generate_menu(entities, tracker, menu_page)
                 elif choice == "3":
                     # TODO: Process entities stack
                     menu_page = "main"
-                    #generate_menu(entities, tracker, menu_page)
                 elif choice == "4":
                     menu_page = "config"
-                    #generate_menu(entities, tracker, menu_page)
                 elif choice == "5":
                     # TODO: Save Generated Entities to Object File
                     pass
@@ -410,7 +410,8 @@ def get_extension_from_mime(mime_type):
         extension = mimetypes.guess_extension(file_type)
         return extension
     except Exception as e:
-        print(f"Error: {e}")
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error: {e}")
         return None
 
 def reset_config(defaults: dict) -> None:
@@ -436,8 +437,9 @@ def reset_config(defaults: dict) -> None:
         config.write(configfile)
 
 def create_random_person() -> Person:
-    #TODO: Fix function
-    print(f"Executing {create_random_person.__name__}...") # TODO: Log execution of create_random_person function
+    #TODO: Fix create_random_person function
+    print(f"Executing {create_random_person.__name__}...") 
+    
     # Create an instance of the factory
     factory = EntityFactory(Person)
 

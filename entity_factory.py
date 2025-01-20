@@ -7,10 +7,13 @@ from organization import Organization
 from gpe import GeoPoliticalEntity
 
 class EntityFactory:
-    def __init__(self, entity_types):
-        self.entity_types = entity_types
+    def __init__(self, entity_type):
+        self.entity_type = entity_type
 
     def create_random_entity(self, **kwargs):
-        entity_type = random.choice(self.entity_types)
+        entity_type = self.entity_type
         # ?
         return entity_type(**kwargs)
+    
+    def get_entity_type(self):
+        return self.entity_type

@@ -82,6 +82,7 @@ class TestGraph(unittest.TestCase):
                 return False        
               
 def test_graph_with_person():
+    print(f"\n------------------------------------------------------------------------------------------\n")
     person_a: Person = Person(first_name="Harry", last_name="Potter", description=None, age=11)
     person_b: Person = Person(first_name="James", last_name="Potter", description=None)
     person_c: Person = Person(first_name="Lily", last_name="Potter", description=None)
@@ -134,19 +135,20 @@ def test_graph_with_person():
     for entity in entities.get_adjacent_nodes(person_a):
         print(f"{entity}")
 
-    print(f"---------------------------------")
+    print("")
     print(f"Metadata for {person_a.name}: ")
     for key, value in entities.get_metadata(person_a): 
         print(f"{key[0].name}->{key[1].name}: {value}")
 
-    print(f"---------------------------------")
+    print("")
     print(f"All Metadata: ")
     for key, value in entities.metadata.items():
         print(f"{key[0].name}->{key[1].name}: {value}")
 
-    print(f"---------------------------------")
+    print("")
     print(f"Unconnected nodes: ")
     print(entities.unconnected_nodes())
+    print("")
 
 if __name__ == "__main__":
     unittest.main()

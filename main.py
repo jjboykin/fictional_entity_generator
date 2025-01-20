@@ -4,11 +4,15 @@ import magic, mimetypes
 import pickle, logging
 from logging.handlers import RotatingFileHandler
 
-from static_options import InputOptionsFileFormat, OutputResultsFileFormat, OutputMode
+from static_options import InputOptionsFileFormat, OutputResultsFileFormat, OutputMode, EntityTypes
 
 from graph import Graph
 from entity_factory import EntityFactory
+from entity_tracker import EntityTracker
 from person import Person
+from location import Location
+from organization import Organization
+from gpe import GeoPoliticalEntity
 
 from tests.test_graph import *
 
@@ -28,7 +32,10 @@ def main():
     results_output_file_path: str = get_datetime_filename("results", get_extension_from_mime(results_outfile_format.value))
     object_output_file_path: str = None
     object_input_file_path: str = None
-    input_file_path: str = None  
+    input_file_path: str = None 
+    entity_stack: list[EntityFactory] = []
+    tracker: EntityTracker = EntityTracker(entity_stack)
+    entities: Graph = Graph()
 
     '''Setup Logging'''
     logger = logging.getLogger(__name__)
@@ -65,7 +72,7 @@ def main():
     parser.add_argument('-o', '--organization', type=int, default=0, help='Specifies how many organization objects to generate')
     parser.add_argument('-gpe', '--geopolitical', type=int, default=0, help='Specifies how many geopolitical entity objects to generate')
     
-    # TODO: Add autosave option later that when on does keep the load and save options in its own [autosave] section of the config
+    # TODO: Add autosave option that when "on" keeps the load and save options in its own [autosave] section of the config
     parser.add_argument('--load', type=str, help='Name of a saved object file to load')
     parser.add_argument('--save', type=str, help='Name to save the generated object file to')
 
@@ -158,48 +165,216 @@ def main():
         # TODO: Load existing objects into memory before generating anymore
 
     # Object arguments in config
+    has_commandline_object_args: bool = False
     if args.person:
+        has_commandline_object_args = True
         config['objects']['person'] = str(args.person)
+        for i in range(0, args.person):
+            factory: EntityFactory = EntityFactory(Person)
+            entity_stack.append(factory)
+
     if args.location:
+        has_commandline_object_args = True
         config['objects']['location'] = str(args.location)
+        for i in range(0, args.location):
+            factory: EntityFactory = EntityFactory(Location)
+            entity_stack.append(factory)
+
     if args.organization:
+        has_commandline_object_args = True
         config['objects']['organization'] = str(args.organization)
+        for i in range(0, args.organization):
+            factory: EntityFactory = EntityFactory(Organization)
+            entity_stack.append(factory)
+        
     if args.geopolitical:
+        has_commandline_object_args = True
         config['objects']['geopolitical'] = str(args.geopolitical)
+        for i in range(0, args.geopolitical):
+            factory: EntityFactory = EntityFactory(GeoPoliticalEntity)
+            entity_stack.append(factory)
     
     if args.save_config:
         # Write updated config to file
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
 
-    #print(f"Config file args:")
+    '''
+    print(f"Config file args:")
     for key, value in config['main'].items():
         print(f"{key}={value}")
 
     for key, value in config['objects'].items():
         print(f"{key}={value}")
+    '''
 
     # Use the options
     '''Setup Text Menu Interface for Program Operation and Testing'''
     use_commandline_interface: bool = True
+    menu_page = "main"
 
     while use_commandline_interface:
-        print("\nMenu:")
-        print("1. Test Graph with Person objects")
-        print("2. Create Random Person")
-        print("3. Exit")
+        choice = generate_menu(entities, tracker, menu_page)
 
-        choice = input("\nEnter your choice: ")
-
-        if choice == "1":
-            test_graph_with_person()
-        elif choice == "2":
-            person = create_random_person()
-            print(person)
-        elif choice == "3":
+        if choice.upper() == "X":
             sys.exit("Exiting the program.")
-        else:
-            print("Invalid choice. Please try again.")
+        if choice.upper() == "T":
+            menu_page = "test"
+            #generate_menu(entities, tracker, menu_page)
+        if choice.upper() == "M":
+            menu_page = "main"
+            #generate_menu(entities, tracker, menu_page)
+
+        match menu_page:
+            case "main":
+                if choice == "1":
+                    menu_page = "entity_create"
+                    #generate_menu(entities, tracker, menu_page)
+                elif choice == "2":
+                    menu_page = "entity_view"
+                    #generate_menu(entities, tracker, menu_page)
+                elif choice == "3":
+                    # TODO: Process entities stack
+                    menu_page = "main"
+                    #generate_menu(entities, tracker, menu_page)
+                elif choice == "4":
+                    menu_page = "config"
+                    #generate_menu(entities, tracker, menu_page)
+                elif choice == "5":
+                    # TODO: Save Generated Entities to Object File
+                    pass
+                elif choice == "6":
+                    # TODO: Load Previously Generated Entities
+                    pass
+                elif choice == "7":
+                    # TODO: Export Generated Entities
+                    pass
+            case "test":
+                if choice == "1":
+                    test_graph_with_person()
+                    input("Press any key to continue...")
+                elif choice == "2":
+                    person = create_random_person()
+                    print(person)
+                    input("Press any key to continue...")
+                else:
+                    print("Invalid choice. Please try again.")
+            case "entity_create":
+                if choice == "1":
+                    pass
+                elif choice == "2":
+                    pass
+                elif choice == "3":
+                    pass
+                elif choice == "4":
+                    pass
+                else:
+                    print("Invalid choice. Please try again.")
+            case "entity_view":
+                if choice == "1":
+                    pass
+                elif choice == "2":
+                    pass
+                elif choice == "3":
+                    pass
+                elif choice == "4":
+                    pass
+                elif choice == "5":
+                    pass
+                else:
+                    print("Invalid choice. Please try again.")
+            case "config":
+                if choice == "1":
+                    pass
+                elif choice == "2":
+                    pass
+                else:
+                    print("Invalid choice. Please try again.")
+            case _:
+                pass
+        
+def generate_menu(entities: Graph, tracker: EntityTracker, page: str=None) -> str:
+    print("")
+    print("==============================" + "< Fictional Entity Generator >" + "==============================" + "\n")
+
+    print(f"Entities Created: {entities.count()}\t| "
+        f"Person= {entities.count(EntityTypes.PERSON)}; "
+        f"Location= {entities.count(EntityTypes.LOCATION)}; " 
+        f"Organization= {entities.count(EntityTypes.ORGANIZATION)}; "
+        f"Geopolitical= {entities.count(EntityTypes.GPE)}")
+
+    if tracker.entity_stack:
+        print(f"Entities Queued:  {tracker.count()}\t| "
+            f"Person= {tracker.count(EntityTypes.PERSON)}; "
+            f"Location= {tracker.count(EntityTypes.LOCATION)}; " 
+            f"Organization= {tracker.count(EntityTypes.ORGANIZATION)}; "
+            f"Geopolitical= {tracker.count(EntityTypes.GPE)}\n")
+        
+    if not page:
+        generate_menu_main(entities, tracker)
+    else:
+        match page:
+            case "main":
+                generate_menu_main(entities, tracker)
+            case "test":
+                generate_menu_test(entities, tracker)
+            case "entity_create":
+                generate_menu_entity_create(entities, tracker)
+            case "entity_view":
+                generate_menu_entity_view(entities, tracker)
+            case "config":
+                generate_menu_config(entities, tracker)
+            case _:
+                generate_menu_main(entities, tracker)
+
+    print("\nT. Run Tests")
+    print("")
+    if not page == "main":
+        print("M. Main Menu")
+    print("X. Exit")
+
+    return input("\nEnter your choice: ")
+
+def generate_menu_config(entities: Graph, tracker: EntityTracker) -> None:
+    print(f"------------------------------------------------------------------------------------------\n")
+    print("Configuration Menu:\n")
+    print("1. Save Current Parameters to Configuration")
+    print("2. Reset Configuration")
+
+def generate_menu_entity_create(entities: Graph, tracker: EntityTracker) -> None:
+    print(f"------------------------------------------------------------------------------------------\n")
+    print("Create Entity Menu:\n")
+    print("1. Person")
+    print("2. Location")
+    print("3. Organization")
+    print("4. Geopolitical Entity")
+
+def generate_menu_entity_view(entities: Graph, tracker: EntityTracker) -> None:
+    print(f"------------------------------------------------------------------------------------------\n")
+    print("View Entity Menu:\n")
+    print("1. Person")
+    print("2. Location")
+    print("3. Organization")
+    print("4. Geopolitical Entity")
+    print("5. All")
+
+def generate_menu_main(entities: Graph, tracker: EntityTracker) -> None:
+    print(f"------------------------------------------------------------------------------------------\n")
+    print("Main Menu:\n")
+    print("1. Queue New Entities")
+    print("2. View Created Entities")
+    print("3. Process Queued Entities")
+    print("4. Edit Configuration Parameters")
+    print("5. Save Generated Entities to Object File")
+    print("6. Load Previously Generated Entities")
+    print("7. Export Generated Entities")
+
+def generate_menu_test(entities: Graph, tracker: EntityTracker) -> None:
+    print(f"------------------------------------------------------------------------------------------\n")
+    print("Test Menu:\n")
+    print("1. Test Graph with Person objects")
+    print("2. Create Random Person")
+
 
 def is_valid_input_options_file(input_file_path) -> bool:
     if os.path.exists(input_file_path):
@@ -261,9 +436,10 @@ def reset_config(defaults: dict) -> None:
         config.write(configfile)
 
 def create_random_person() -> Person:
+    #TODO: Fix function
     print(f"Executing {create_random_person.__name__}...") # TODO: Log execution of create_random_person function
     # Create an instance of the factory
-    factory = EntityFactory([Person])
+    factory = EntityFactory(Person)
 
     # Generate random entities
     #person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")

@@ -1,4 +1,8 @@
 from enum import Enum
+from person import Person
+from location import Location
+from organization import Organization
+from gpe import GeoPoliticalEntity
 
 class InputOptionsFileFormat(Enum):
     CSV = "text/csv"
@@ -17,3 +21,9 @@ class OutputMode(Enum):
     #GUI = "gui"
     #GUI_AND_FILE = "gf"
     ALL = "all"
+
+class EntityTypes(Enum):
+    PERSON = Person.__name__
+    LOCATION = Location.__name__
+    ORGANIZATION = Organization.__name__
+    GPE = GeoPoliticalEntity.__name__

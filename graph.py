@@ -69,6 +69,16 @@ class Graph:
         if metadata is not None:
             self.add_metadata_reciprocal(node1, node2, metadata)
 
+    def count(self, type=None) -> int:
+        if type:
+            count:int = 0
+            for i in range (0, len(self.graph)):
+                if eval(type.value) == self.graph[i]:
+                    count += 1
+            return count
+        else:
+            return len(self.graph)
+
     def edge_exists(self, node1, node2) -> bool:
         if node1 in self.graph and node2 in self.graph:
             return (node2 in self.graph[node1]) and (node1 in self.graph[node2])

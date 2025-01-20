@@ -7,6 +7,7 @@ from logging.handlers import RotatingFileHandler
 from static_options import InputOptionsFileFormat, OutputResultsFileFormat, OutputMode, EntityTypes
 
 from graph import Graph
+from entity_option import EntityOption, OptionTypes
 from entity_factory import EntityFactory
 from entity_tracker import EntityTracker
 from person import Person
@@ -36,6 +37,7 @@ def main():
     entity_stack: list[EntityFactory] = []
     tracker: EntityTracker = EntityTracker(entity_stack)
     entities: Graph = Graph()
+    random_options: list[EntityOption] = []
 
     '''Setup Logging'''
     logger = logging.getLogger(__name__)
@@ -242,7 +244,8 @@ def main():
                     menu_page = "config"
                 elif choice == "5":
                     # TODO: Save Generated Entities to Object File
-                    pass
+                    save_object_data(entities, f"entity_{object_output_file_path}")
+                    save_object_data(random_options, f"option_{object_output_file_path}")
                 elif choice == "6":
                     # TODO: Load Previously Generated Entities
                     pass
@@ -436,16 +439,25 @@ def reset_config(defaults: dict) -> None:
     with open('config.ini', 'w') as configfile:
         config.write(configfile)
 
+def save_object_data(data, file_path: str) -> None:
+    """Save object data to pickle """
+
+    # Open a file in binary write mode
+    with open(file_path, "wb") as file:
+        # Dump the object to the file
+        pickle.dump(data, file)
+
 def create_random_person() -> Person:
-    #TODO: Fix create_random_person function
     print(f"Executing {create_random_person.__name__}...") 
+    logger = logging.getLogger(__name__)
+    logger.error(f"Executing {create_random_person.__name__}...")
     
     # Create an instance of the factory
     factory = EntityFactory(Person)
 
     # Generate random entities
-    #person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")
-    person: Person = factory.create_random_entity()
+    person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")
+    #person: Person = factory.create_random_entity()
     return person
 
 if __name__ == "__main__":

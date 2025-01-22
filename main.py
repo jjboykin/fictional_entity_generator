@@ -37,7 +37,9 @@ def main():
     entity_stack: list[EntityFactory] = []
     tracker: EntityTracker = EntityTracker(entity_stack)
     entities: Graph = Graph()
-    random_options: list[EntityOption] = []
+
+    # TODO: Add a function to load and save the random options from the default or passed file
+    random_options: list[EntityOption] = [] # Add to or override based on a flag
 
     '''Setup Logging'''
     logger = logging.getLogger(__name__)
@@ -258,7 +260,6 @@ def main():
                     input("Press any key to continue...")
                 elif choice == "2":
                     person = create_random_person()
-                    print(person)
                     input("Press any key to continue...")
                 else:
                     print("Invalid choice. Please try again.")
@@ -448,15 +449,17 @@ def save_object_data(data, file_path: str) -> None:
         pickle.dump(data, file)
 
 def create_random_person() -> Person:
-    print(f"Executing {create_random_person.__name__}...") 
     logger = logging.getLogger(__name__)
-    logger.error(f"Executing {create_random_person.__name__}...")
+    logger.warning(f"Executing {create_random_person.__name__}...")
     
     # Create an instance of the factory
-    factory = EntityFactory(Person)
+    factory: EntityFactory = EntityFactory(Person)
+    logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
     # Generate random entities
     person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")
+    logger.warning(f"Attributes of created Person: {person.attributes}")
+
     #person: Person = factory.create_random_entity()
     return person
 

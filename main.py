@@ -1,15 +1,17 @@
-import os, sys, datetime
-import argparse, configparser
-import magic, mimetypes
-import pickle, logging
+import os, sys, datetime, csv, json, mimetypes, random
+import argparse, configparser, logging
+import magic, pickle
+
 from logging.handlers import RotatingFileHandler
 
 from static_options import InputOptionsFileFormat, OutputResultsFileFormat, OutputMode, EntityTypes
 
-from graph import Graph
+from entity import Entity
+from entity_graph import EntityGraph
 from entity_option import EntityOption, OptionTypes
 from entity_factory import EntityFactory
 from entity_tracker import EntityTracker
+from species import Species
 from person import Person
 from location import Location
 from organization import Organization
@@ -34,12 +36,13 @@ def main():
     object_output_file_path: str = None
     object_input_file_path: str = None
     input_file_path: str = None 
-    entity_stack: list[EntityFactory] = []
-    tracker: EntityTracker = EntityTracker(entity_stack)
-    entities: Graph = Graph()
+    tracker: EntityTracker = EntityTracker()
+    entities: EntityGraph = EntityGraph()
 
-    # TODO: Add a function to load and save the random options from the default or passed file
-    random_options: list[EntityOption] = [] # Add to or override based on a flag
+    # TODO: Implement read_input_options_file function to load and save the random 
+    # options into the options list from the default or passed file, using a flag 
+    # to determine whether to add to or override the default options
+    options_list: list[EntityOption] = []
 
     '''Setup Logging'''
     logger = logging.getLogger(__name__)
@@ -180,43 +183,34 @@ def main():
         has_commandline_object_args = True
         config['objects']['person'] = str(args.person)
         for i in range(0, args.person):
-            factory: EntityFactory = EntityFactory(Person)
-            entity_stack.append(factory)
+            tracker.entity_stack.append(Person)
 
     if args.location:
         has_commandline_object_args = True
         config['objects']['location'] = str(args.location)
         for i in range(0, args.location):
-            factory: EntityFactory = EntityFactory(Location)
-            entity_stack.append(factory)
+            tracker.entity_stack.append(Location)
 
     if args.organization:
         has_commandline_object_args = True
         config['objects']['organization'] = str(args.organization)
         for i in range(0, args.organization):
-            factory: EntityFactory = EntityFactory(Organization)
-            entity_stack.append(factory)
+            tracker.entity_stack.append(Organization)
         
     if args.geopolitical:
         has_commandline_object_args = True
         config['objects']['geopolitical'] = str(args.geopolitical)
         for i in range(0, args.geopolitical):
-            factory: EntityFactory = EntityFactory(GeoPoliticalEntity)
-            entity_stack.append(factory)
+            tracker.entity_stack.append(GeoPoliticalEntity)
     
     if args.save_config:
         # Write updated config to file
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
 
-    '''
-    print(f"Config file args:")
-    for key, value in config['main'].items():
-        print(f"{key}={value}")
-
-    for key, value in config['objects'].items():
-        print(f"{key}={value}")
-    '''
+    #Process entities stack by popping off the top factory and creating an entity that is added to the graph
+    if has_commandline_object_args:
+        process_entities_stack(entities, tracker)
 
     # Use the options
     '''Setup Text Menu Interface for Program Operation and Testing'''
@@ -240,14 +234,14 @@ def main():
                 elif choice == "2":
                     menu_page = "entity_view"
                 elif choice == "3":
-                    # TODO: Process entities stack
+                    process_entities_stack(entities, tracker)
                     menu_page = "main"
                 elif choice == "4":
                     menu_page = "config"
                 elif choice == "5":
-                    # TODO: Save Generated Entities to Object File
+                    # Save Generated Entities to Object File
                     save_object_data(entities, f"entity_{object_output_file_path}")
-                    save_object_data(random_options, f"option_{object_output_file_path}")
+                    save_object_data(options_list, f"option_{object_output_file_path}")
                 elif choice == "6":
                     # TODO: Load Previously Generated Entities
                     pass
@@ -259,19 +253,27 @@ def main():
                     test_graph_with_person()
                     input("Press any key to continue...")
                 elif choice == "2":
-                    person = create_random_person()
+                    person = create_random_person(entities, tracker)
                     input("Press any key to continue...")
                 else:
                     print("Invalid choice. Please try again.")
             case "entity_create":
                 if choice == "1":
-                    pass
+                    num_person = input("How many Person entities would you like to create? ")
+                    for i in range(0, int(num_person)):
+                        tracker.entity_stack.append(Person)
                 elif choice == "2":
-                    pass
+                    num_location = input("How many Location entities would you like to create? ")
+                    for i in range(0, int(num_location)):
+                        tracker.entity_stack.append(Location)
                 elif choice == "3":
-                    pass
+                    num_org = input("How many Organization entities would you like to create? ")
+                    for i in range(0, int(num_org)):
+                        tracker.entity_stack.append(Organization)
                 elif choice == "4":
-                    pass
+                    num_gpe = input("How many Geopolitical entities would you like to create? ")
+                    for i in range(0, int(num_gpe)):
+                        tracker.entity_stack.append(GeoPoliticalEntity)
                 else:
                     print("Invalid choice. Please try again.")
             case "entity_view":
@@ -380,16 +382,137 @@ def generate_menu_test(entities: Graph, tracker: EntityTracker) -> None:
     print("2. Create Random Person")
 
 
-def is_valid_input_options_file(input_file_path) -> bool:
+def is_valid_input_options_file(input_file_path:str) -> bool:
     if os.path.exists(input_file_path):
         mime = magic.from_file(input_file_path, mime = True)
     else:
         raise FileNotFoundError (f"Input options file not found at {input_file_path}.")
     return mime in InputOptionsFileFormat
         
-def read_input_options_file(input_file_path):
-    # TODO: Read input_options_file into table objects
-    pass
+def read_input_options_file(input_file_path: str, options_list: list[EntityOption]) -> None:
+    """
+    Reads input options from a CSV or JSON file and populates the global `options_list`
+    with `EntityOption` instances.
+
+    args:
+        input_file_path: Path to the input options file.
+
+    raises:
+        FileNotFoundError: If the specified file does not exist.
+        ValueError: If the file format is invalid or the data cannot be parsed.
+    """
+
+    try:
+        if input_file_path.endswith(".csv"):
+            with open(input_file_path, 'r') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    try:
+                        # Find or create the EntityOption in the options_list
+                        option_type = OptionTypes[row['type']]
+                        existing_option = next((opt for opt in options_list if opt.type == option_type and opt.name == row['name']), None)
+                        if existing_option:
+                            # Update existing option with new values 
+                            existing_option.description = row.get('description', ''),
+                            existing_option.weight = float(row.get('weight', 1.0)),
+                            existing_option.min = int(row.get('min', 1))
+                            existing_option.max = int(row.get('max', 1))
+                            # TODO: Update existing_option mutually_exclusive, requirements, and specializations
+                        else:    
+                            # Create new EntityOption
+                            exclusive_options: list[EntityOption] = []
+                            if 'exclusive' in row and row['exclusive']:
+                                for exclusive_option in row['exclusive'].split(','):
+                                    # Search for the exclusive option in the global options list 
+                                    # to see if it already exists, and if not create it,
+                                    # then append it to the exclusive options list.
+                                    exclusive_options.append(
+                                        EntityOption(type=OptionTypes[exclusive_option.strip()]) 
+                                    )
+                            requirements: list[str] = []
+                            if 'requirements' in row and row['requirements']:
+                                requirements = row['requirements'].split(',')
+                            specializations: list[EntityOption] = []
+                            if 'specializations' in row and row['specializations']:
+                                for specialization in row['specializations'].split(','):
+                                    # Search for the specialization option in the global options list 
+                                    # to see if it already exists, and if not create it,
+                                    # then append it to the exclusive options list.
+                                    specializations.append(
+                                        EntityOption(type=OptionTypes[specialization.strip()]) 
+                                    )
+                            options_list.append(
+                                EntityOption(
+                                    type=option_type,
+                                    name=row['name'],
+                                    description=row.get('description', ''),
+                                    weight=float(row.get('weight', 1.0)),
+                                    min=int(row.get('min', 1)),
+                                    max=int(row.get('max', 1)),
+                                    mutually_exclusive=exclusive_options,
+                                    requirements=requirements,
+                                    specilizations=specializations
+                                )
+                        )
+                    except KeyError as e:
+                        raise ValueError(f"Invalid CSV header: {e}")
+                    except ValueError as e:
+                        raise ValueError(f"Invalid data in CSV: {e}")
+
+        elif input_file_path.endswith(".json"):
+            with open(input_file_path, 'r') as file:
+                data = json.load(file)
+                for option_data in data:
+                    try:
+                        # Find or create the EntityOption in the options_list
+                        option_type = OptionTypes[option_data['type']]
+                        existing_option = next((opt for opt in options_list if opt.type == option_type and opt.name == option_data['name']), None)
+                        if existing_option:
+                            # Update existing option with new values 
+                            existing_option.description = option_data['description']
+                            existing_option.weight = float(option_data['weight'])
+                            existing_option.min = int(option_data['min'])
+                            existing_option.max = int(option_data['max'])
+                            # TODO: Update existing_option mutually_exclusive, requirements, and specializations
+                        else:
+                            # Search for the exclusive option in the global options list 
+                            # to see if it already exists, and if not create it,
+                            # then append it to the exclusive options list.
+                            exclusive: list[EntityOption] = [
+                                EntityOption(type=OptionTypes[opt]) 
+                                for opt in option_data.get('exclusive', [])
+                            ]
+                            requirements: list[str] = option_data.get('requirements', [])
+                            # Search for the specialization option in the global options list 
+                            # to see if it already exists, and if not create it,
+                            # then append it to the specialization options list.
+                            specilizations: list[EntityOption] = [
+                                EntityOption(type=OptionTypes[opt]) 
+                                for opt in option_data.get('specializations', [])
+                            ]
+                            options_list.append(
+                                EntityOption(
+                                    type=option_type,
+                                    name=option_data['name'],
+                                    value=option_data['value'],
+                                    weight=float(option_data['weight']),
+                                    min=int(option_data['min']),
+                                    max=int(option_data['max']),
+                                    mutually_exclusive=exclusive,
+                                    requirements=requirements,
+                                    specilizations=specilizations
+                                )
+                            )
+                    except KeyError as e:
+                        raise ValueError(f"Invalid JSON data: {e}")
+                    except ValueError as e:
+                        raise ValueError(f"Invalid data in JSON: {e}")
+
+        else:
+            raise ValueError(f"Unsupported file format: {input_file_path}")
+
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Input options file not found at {input_file_path}.")
 
 def is_valid_results_output_mode(results_output_mode) -> bool:
     return results_output_mode in OutputMode
@@ -448,20 +571,138 @@ def save_object_data(data, file_path: str) -> None:
         # Dump the object to the file
         pickle.dump(data, file)
 
-def create_random_person() -> Person:
+def create_random_person(entities: EntityGraph, options_list: list[EntityOption]) -> Person:
     logger = logging.getLogger(__name__)
     logger.warning(f"Executing {create_random_person.__name__}...")
     
+    applicable_option_types = {
+        OptionTypes.BACKGROUND: (1, 2),
+        OptionTypes.FAMILY_NAME: (1, 1),
+        OptionTypes.NAME: (1, 2),
+        OptionTypes.NICKNAME: (0, 2),
+        OptionTypes.PERSONALITY_TRAIT: (1, 3),
+        OptionTypes.PHYSICAL_TRAIT: (1, 3),
+        OptionTypes.PROFESSION: (1, 2),
+        OptionTypes.RACE: (1, 1),
+        OptionTypes.ROLE: (0, 3),
+        OptionTypes.RELATIONSHIP: (1, 10),
+        OptionTypes.SPECIALIZATION: (0, 2),
+        OptionTypes.SKILL: (1, 6),
+        OptionTypes.UNIQUE: (0, 2)
+    }
+
     # Create an instance of the factory
-    factory: EntityFactory = EntityFactory(Person)
+    factory: EntityFactory = EntityFactory(Person, applicable_option_types, options_list)
     logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
     # Generate random entities
-    person: Person = factory.create_random_entity(first_name="Naruto", last_name="Uzumaki", description="The next Hokage, dattebayo!")
+    person: Person = factory.create_random_entity()
     logger.warning(f"Attributes of created Person: {person.attributes}")
+    entities.add(person)
 
-    #person: Person = factory.create_random_entity()
+    race = person.attributes[OptionTypes.RACE][0]
+    species: Species = Species(name=race)
+    species = entities.add(species)
+
+    age: int = None
+    for trait in person.attributes[OptionTypes.PHYSICAL_TRAIT]:
+        for age_range in species.age_ranges:
+            if trait in age_range:
+                age = random.randint(age_range[0], age_range[1])
+                break    
+    object.__setattr__(person, "age", age) 
+
     return person
+
+def create_random_location(entities: EntityGraph, options_list: list[EntityOption]) -> Location:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Executing {create_random_location.__name__}...")
+    
+    applicable_option_types = {
+        OptionTypes.NAME: (1, 2),
+        OptionTypes.TYPE: (1, 1),
+        OptionTypes.CLIMATE: (1, 1),
+        OptionTypes.RESOURCES: (1, 2),
+        OptionTypes.TERRAIN: (1, 2),
+        OptionTypes.UNIQUE: (0, 2)
+    }
+
+    # Create an instance of the factory
+    factory: EntityFactory = EntityFactory(Location, applicable_option_types, options_list)
+    logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
+
+    # Generate random entities
+    location: Location = factory.create_random_entity()
+    logger.warning(f"Attributes of created Location: {location.attributes}")
+    
+    return location
+
+def create_random_organization(entities: EntityGraph, options_list: list[EntityOption]) -> Organization:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Executing {create_random_organization.__name__}...")
+    
+    applicable_option_types = {
+        OptionTypes.NAME: (1, 2),
+        OptionTypes.TYPE: (1, 1),
+        OptionTypes.RELATIONSHIP: (0, 5),
+        OptionTypes.ROLE: (1, 2),
+        OptionTypes.SPECIALIZATION: (0, 2),
+        OptionTypes.UNIQUE: (0, 2)
+    }
+
+    # Create an instance of the factory
+    factory: EntityFactory = EntityFactory(Organization, applicable_option_types, options_list)
+    logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
+
+    # Generate random entities
+    organization: Organization = factory.create_random_entity()
+    logger.warning(f"Attributes of created Location: {organization.attributes}")
+    
+    return organization
+
+def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -> GeoPoliticalEntity:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Executing {create_random_gpe.__name__}...")
+    
+    applicable_option_types = {
+        OptionTypes.NAME: (1, 2),
+        OptionTypes.RELATIONSHIP: (0, 10),
+        OptionTypes.TYPE: (1, 1),
+        OptionTypes.UNIQUE: (0, 2)
+    }
+    
+    # Create an instance of the factory
+    factory: EntityFactory = EntityFactory(GeoPoliticalEntity, applicable_option_types, options_list)
+    logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
+
+
+    # Generate random entities
+    gpe: GeoPoliticalEntity = factory.create_random_entity()
+    logger.warning(f"Attributes of created Location: {gpe.attributes}")
+
+    gpe.location = create_random_location()
+    gpe.organization = create_random_organization()
+    
+    return gpe
+
+def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, options_list: list[EntityOption]) -> None:
+    
+    while tracker.entity_stack:
+        entity = tracker.entity_stack.pop()
+        if isinstance(entity, Person):    
+            person = create_random_person(entities, options_list)
+            entities.add(person)
+        elif isinstance(entity, Location):
+            location = create_random_location(entities, options_list)
+            entities.add(location)
+        elif isinstance(entity, Organization):
+            organization = create_random_organization(entities, options_list)
+            entities.add(organization)
+        elif isinstance(entity, GeoPoliticalEntity):
+            gpe = create_random_gpe(entities, options_list)
+            entities.add(gpe)
+        else:
+            raise TypeError(f"Invalid entity type: {entity}")
 
 if __name__ == "__main__":
     main()

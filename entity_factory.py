@@ -1,15 +1,10 @@
 import random
 
 from entity import Entity
-from person import Person
-from location import Location
-from organization import Organization
-from gpe import GeoPoliticalEntity
-
 from entity_option import EntityOption, OptionTypes
 
 class EntityFactory:
-    def __init__(self, entity_type: Entity | str) -> None:
+    def __init__(self, entity_type: Entity | str, applicable_option_types: dict[OptionTypes, tuple[int, int]], options_list: list[EntityOption]) -> None:
         """
         Initializes the EntityFactory with the desired entity type.
 
@@ -21,53 +16,15 @@ class EntityFactory:
             try:
                 self.__entity_type: Entity = globals()[entity_type] 
             except KeyError:
-                raise ValueError(f"Invalid entity type: {entity_type}")
+                raise TypeError(f"Invalid entity type: {entity_type}")
         else:
             self.__entity_type: Entity = entity_type
 
         if not issubclass(self.__entity_type, Entity):
             raise TypeError(f"{self.__entity_type} does not inherit from Entity.")
         
-        # Define applicable option types for each entity type
-        if entity_type == Person:
-            self.applicable_option_types = {
-                OptionTypes.BACKGROUND: (1, 2),
-                OptionTypes.FAMILY_NAME: (1, 1),
-                OptionTypes.NAME: (1, 2),
-                OptionTypes.NICKNAME: (0, 2),
-                OptionTypes.PERSONALITY_TRAIT: (1, 3),
-                OptionTypes.PHYSICAL_TRAIT: (1, 3),
-                OptionTypes.PROFESSION: (1, 2),
-                OptionTypes.RACE: (1, 1),
-                OptionTypes.SPECIALIZATION: (0, 2),
-                OptionTypes.SKILL: (1, 6),
-                OptionTypes.UNIQUE: (0, 2)
-            }
-        elif entity_type == Location:
-            self.applicable_option_types = {
-                OptionTypes.NAME: (1, 2),
-                OptionTypes.CLIMATE: (1, 1),
-                OptionTypes.RESOURCES: (1, 2),
-                OptionTypes.TERRAIN: (1, 2),
-                OptionTypes.UNIQUE: (0, 2)
-            }
-        elif entity_type == Organization:
-            self.applicable_option_types = {
-                OptionTypes.NAME: (1, 2),
-                OptionTypes.ROLE: (1, 2),
-                OptionTypes.SPECIALIZATION: (0, 2),
-                OptionTypes.UNIQUE: (0, 2)
-            }
-        elif entity_type == GeoPoliticalEntity:
-            self.applicable_option_types = {
-                OptionTypes.NAME: (1, 2),
-                OptionTypes.UNIQUE: (0, 2)
-            }
-        else:
-            self.applicable_option_types = {
-                OptionTypes.NAME: (1, 2),
-            }
-            # Add more entity types and their applicable options as needed
+        self.applicable_option_types = applicable_option_types
+        self.options_list = options_list
 
     def create_random_entity(self, options: list[EntityOption]=None, **kwargs) -> Entity:
         """
@@ -85,7 +42,7 @@ class EntityFactory:
         if not issubclass(self.__entity_type, Entity):
             raise TypeError(f"{self.__entity_type} does not inherit from Entity.")
         
-        entity_kwargs: dict[OptionTypes, list[str]]  = {}
+        entity_kwargs: dict[OptionTypes, list[EntityOption]]  = {}
  
         # Handle EntityOptions
         if options:
@@ -98,17 +55,18 @@ class EntityFactory:
 
         # Select random values for each option type
             for option_type, count in option_counts.items():
-                selected_options = [opt for opt in options if opt.type == option_type]
-                for _ in range(count):
-                    selected_option = random.choices(selected_options, weights=[opt.weight for opt in selected_options], k=1)[0]
-                    # Set the attribute value(s) on the entity
-                    entity_kwargs[selected_option.type].append(selected_option.name)
+                selected_options = [opt for opt in self.options_list if opt.type == option_type]  # Use options_list here
+                entity_kwargs[option_type] = []  # Initialize an empty list for each option type
+                if selected_options:
+                    for _ in range(count):
+                        selected_option = random.choices(selected_options, weights=[opt.weight for opt in selected_options], k=1)[0]
+                        entity_kwargs[option_type].append(selected_option)
                 
         #Create the entity instance
-        entity_kwargs.update(kwargs) 
+        #entity_kwargs.update(kwargs) 
         #entity = self.__entity_type(attributes=entity_kwargs, **kwargs)
-        entity = self.__entity_type(attributes=entity_kwargs)
-    
+        entity = self.__entity_type(attributes=entity_kwargs, applicable_option_types=self.applicable_option_types, **kwargs)
+
         return entity
     
     def get_entity_type(self):

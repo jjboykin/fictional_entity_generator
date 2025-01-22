@@ -19,6 +19,7 @@ class OptionTypes(Enum):
     SKILL = "Skill"
     SPECIALIZATION = "Specialization"
     TERRAIN = "Terrain"
+    TYPE = "Type"
     UNIQUE = "Unique Trait"
 
 @dataclass(kw_only=True)

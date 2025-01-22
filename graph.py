@@ -6,6 +6,12 @@ class Graph:
     def __repr__(self):
         return str(self.graph) + str(self.metadata)
     
+    def add(self, node) -> None:
+        self.add_node(node)
+
+    def add_relationship(self, node1, node2, metadata1: dict = None, metadata2: dict = None) -> None:
+        self.add_pair(node1, node2, metadata1, metadata2)
+
     def add_edge(self, node1, node2) -> None:
         if node1 in self.graph:
             self.graph[node1].add(node2)
@@ -24,6 +30,8 @@ class Graph:
         if metadata is not None:
             if (node1, node2) not in self.metadata:
                 self.metadata[(node1, node2)] = metadata
+            else:
+                self.metadata[(node1, node2)].update(metadata)
 
     def add_metadata2(self, node1, node2, metadata1: dict = None, metadata2: dict = None) -> None:
         if metadata1 is not None:
@@ -40,7 +48,7 @@ class Graph:
             if (node2, node1) not in self.metadata:
                 self.metadata[(node2, node2)] = metadata
 
-    def add(self, node1, node2, metadata1: dict = None, metadata2: dict = None) -> None:
+    def add_pair(self, node1, node2, metadata1: dict = None, metadata2: dict = None) -> None:
         if node1 not in self.graph:
             self.add_node(node1)
 
@@ -56,7 +64,7 @@ class Graph:
         if metadata2 is not None:
             self.add_metadata(node2, node1, metadata2)           
 
-    def add_reciprocal(self, node1, node2, metadata: dict = None) -> None:
+    def add_reciprocal_pair(self, node1, node2, metadata: dict = None) -> None:
         if node1 not in self.graph:
             self.add_node(node1)
 
@@ -79,10 +87,16 @@ class Graph:
         else:
             return len(self.graph)
 
+    def exists(self, node) -> bool:
+        return node in self.graph
+    
     def edge_exists(self, node1, node2) -> bool:
         if node1 in self.graph and node2 in self.graph:
             return (node2 in self.graph[node1]) and (node1 in self.graph[node2])
         return False
+    
+    def get_node(self, node) -> set:
+        return self.graph[node]
     
     def get_adjacent_nodes(self, node) -> list:
         return list(self.graph[node])
@@ -93,6 +107,27 @@ class Graph:
             if node in key:
                 metadata.append((key, value))
         return metadata
+    
+    def remove(self, node) -> None:
+        if node in self.graph:
+            del self.graph[node]
+        for key, value in self.graph.items():
+            if node in value:
+                value.remove(node)
+        for key in self.metadata.items():
+            if node in key:
+                del self.metadata[key]
+    
+    def remove_edge(self, node1, node2) -> None:
+        if node1 in self.graph:
+            self.graph[node1].remove(node2)
+        if node2 in self.graph:
+            self.graph[node2].remove(node1)
+        for key in self.metadata.items():
+            if node1 in key:
+                del self.metadata[key]
+            if node2 in key:
+                del self.metadata[key]
 
     def unconnected_nodes(self) -> list:
         unconnected = []

@@ -12,8 +12,9 @@ class SpeciesAttributes(Enum):
 
 @dataclass(frozen=True, kw_only=True)
 class Species(Entity):
-    attributes: dict[SpeciesAttributes, bool] = field(default=None)
-
+    species_traits: list[SpeciesAttributes] = field(default_factory=list)
+    age_ranges: dict[str, tuple[int, int]] = field(default_factory=dict)
+    
     def __post_init__(self):
         super().__post_init__()
     

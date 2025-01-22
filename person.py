@@ -1,21 +1,23 @@
 from dataclasses import dataclass, field
 from species import Species
+from entity_option import OptionTypes
 
 @dataclass(frozen=True, kw_only=True)
 class Person(Species):
     name: str = field(init=False)
-    first_name: str = field(default=None)
-    last_name: str = field(default=None)
+    given_name: str = field(default=None)
+    family_name: str = field(default=None)
     age: int = field(default=None)
 
-    # TODO: Pull name, first_name, last_name, and age from attributes in post_init
-
     def __post_init__(self):
-        
-        # Only run this check if the first_name and last_name attributes are not found in the attributes dictionary
-        #if not self.first_name or not self.last_name:
-        #    raise ValueError("First and last name are required fields")
-        
         super().__post_init__()
-        
+
+        if OptionTypes.NAME in self.attributes:
+            object.__setattr__(self, "given_name", self.attributes[OptionTypes.NAME][0])
+        if OptionTypes.FAMILY_NAME in self.attributes:
+            object.__setattr__(self, "family_name", self.attributes[OptionTypes.FAMILY_NAME][0])
+
+        if not self.given_name or not self.family_name:
+            raise ValueError("First and last name are required fields")   
+            
         object.__setattr__(self, "name", f"{self.first_name} {self.last_name}")

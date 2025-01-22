@@ -39,9 +39,7 @@ def main():
     tracker: EntityTracker = EntityTracker()
     entities: EntityGraph = EntityGraph()
 
-    # TODO: Implement read_input_options_file function to load and save the random 
-    # options into the options list from the default or passed file, using a flag 
-    # to determine whether to add to or override the default options
+    # TODO: Create an import file to test the options list with
     options_list: list[EntityOption] = []
 
     '''Setup Logging'''
@@ -210,7 +208,7 @@ def main():
 
     #Process entities stack by popping off the top factory and creating an entity that is added to the graph
     if has_commandline_object_args:
-        process_entities_stack(entities, tracker)
+        process_entities_stack(entities, tracker, options_list)
 
     # Use the options
     '''Setup Text Menu Interface for Program Operation and Testing'''
@@ -391,7 +389,7 @@ def is_valid_input_options_file(input_file_path:str) -> bool:
         
 def read_input_options_file(input_file_path: str, options_list: list[EntityOption]) -> None:
     """
-    Reads input options from a CSV or JSON file and populates the global `options_list`
+    Reads input options from a CSV or JSON file and populates the `options_list`
     with `EntityOption` instances.
 
     args:
@@ -401,58 +399,60 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
         FileNotFoundError: If the specified file does not exist.
         ValueError: If the file format is invalid or the data cannot be parsed.
     """
-
+    # TODO: Change read_input_options_file function to load and save the random 
+    # options into the options list from the default or passed file, using a flag 
+    # to determine whether to add to or override the default options
+    
     try:
         if input_file_path.endswith(".csv"):
             with open(input_file_path, 'r') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     try:
-                        # Find or create the EntityOption in the options_list
+                        #Parse row data from the CSV file to the local EntityOption member variables
                         option_type = OptionTypes[row['type']]
-                        existing_option = next((opt for opt in options_list if opt.type == option_type and opt.name == row['name']), None)
-                        if existing_option:
-                            # Update existing option with new values 
-                            existing_option.description = row.get('description', ''),
-                            existing_option.weight = float(row.get('weight', 1.0)),
-                            existing_option.min = int(row.get('min', 1))
-                            existing_option.max = int(row.get('max', 1))
-                            # TODO: Update existing_option mutually_exclusive, requirements, and specializations
-                        else:    
-                            # Create new EntityOption
-                            exclusive_options: list[EntityOption] = []
-                            if 'exclusive' in row and row['exclusive']:
-                                for exclusive_option in row['exclusive'].split(','):
-                                    # Search for the exclusive option in the global options list 
-                                    # to see if it already exists, and if not create it,
-                                    # then append it to the exclusive options list.
-                                    exclusive_options.append(
-                                        EntityOption(type=OptionTypes[exclusive_option.strip()]) 
-                                    )
-                            requirements: list[str] = []
-                            if 'requirements' in row and row['requirements']:
-                                requirements = row['requirements'].split(',')
-                            specializations: list[EntityOption] = []
-                            if 'specializations' in row and row['specializations']:
-                                for specialization in row['specializations'].split(','):
-                                    # Search for the specialization option in the global options list 
-                                    # to see if it already exists, and if not create it,
-                                    # then append it to the exclusive options list.
-                                    specializations.append(
-                                        EntityOption(type=OptionTypes[specialization.strip()]) 
-                                    )
-                            options_list.append(
-                                EntityOption(
-                                    type=option_type,
-                                    name=row['name'],
-                                    description=row.get('description', ''),
-                                    weight=float(row.get('weight', 1.0)),
-                                    min=int(row.get('min', 1)),
-                                    max=int(row.get('max', 1)),
-                                    mutually_exclusive=exclusive_options,
-                                    requirements=requirements,
-                                    specilizations=specializations
-                                )
+                        option_name = row['name']
+                        description = row.get('description', ''),
+                        weight = float(row.get('weight', 1.0)),
+                        min = int(row.get('min', 1))
+                        max = int(row.get('max', 1))
+
+                        exclusive_options: list[EntityOption] = []
+                        if 'exclusive' in row and row['exclusive']:
+                            for exclusive_option in row['exclusive'].split(','):
+                                # Search for the exclusive option in the global options list 
+                                existing_exclusive_option_index = index_in_options_list(EntityOption(name=exclusive_option), options_list)
+                                if existing_exclusive_option_index is not None:
+                                    exclusive_options.append(options_list[existing_exclusive_option_index])
+                                else:
+                                    exclusive_options.append(EntityOption(name=exclusive_option))
+
+                        requirements: list[str] = []
+                        if 'requirements' in row and row['requirements']:
+                            requirements = row['requirements'].split(',')
+
+                        specializations: list[EntityOption] = []
+                        if 'specializations' in row and row['specializations']:
+                            for specialization in row['specializations'].split(','):
+                                # Search for the specialization option in the global options list 
+                                existing_specialization_index = index_in_options_list(EntityOption(name=specialization, type=OptionTypes.SPECIALIZATION), options_list)
+                                if existing_specialization_index is not None:
+                                    specializations.append(options_list[existing_specialization_index])
+                                else:
+                                    specializations.append(EntityOption(name=specialization, type=OptionTypes.SPECIALIZATION))
+                        
+                        # Find or create the EntityOption in the options_list using the local member variables
+                        upsert_entity_option(EntityOption(
+                            type = option_type,
+                            name = option_name,
+                            description = description,
+                            weight = weight,
+                            min = min,
+                            max = max,
+                            mutually_exclusive = exclusive_options,
+                            requirements = requirements,
+                            specilizations = specializations
+                            )
                         )
                     except KeyError as e:
                         raise ValueError(f"Invalid CSV header: {e}")
@@ -464,45 +464,49 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
                 data = json.load(file)
                 for option_data in data:
                     try:
-                        # Find or create the EntityOption in the options_list
+                        #Parse row data from the CSV file to the local EntityOption member variables
                         option_type = OptionTypes[option_data['type']]
-                        existing_option = next((opt for opt in options_list if opt.type == option_type and opt.name == option_data['name']), None)
-                        if existing_option:
-                            # Update existing option with new values 
-                            existing_option.description = option_data['description']
-                            existing_option.weight = float(option_data['weight'])
-                            existing_option.min = int(option_data['min'])
-                            existing_option.max = int(option_data['max'])
-                            # TODO: Update existing_option mutually_exclusive, requirements, and specializations
-                        else:
-                            # Search for the exclusive option in the global options list 
-                            # to see if it already exists, and if not create it,
-                            # then append it to the exclusive options list.
-                            exclusive: list[EntityOption] = [
-                                EntityOption(type=OptionTypes[opt]) 
-                                for opt in option_data.get('exclusive', [])
-                            ]
-                            requirements: list[str] = option_data.get('requirements', [])
-                            # Search for the specialization option in the global options list 
-                            # to see if it already exists, and if not create it,
-                            # then append it to the specialization options list.
-                            specilizations: list[EntityOption] = [
-                                EntityOption(type=OptionTypes[opt]) 
-                                for opt in option_data.get('specializations', [])
-                            ]
-                            options_list.append(
-                                EntityOption(
-                                    type=option_type,
-                                    name=option_data['name'],
-                                    value=option_data['value'],
-                                    weight=float(option_data['weight']),
-                                    min=int(option_data['min']),
-                                    max=int(option_data['max']),
-                                    mutually_exclusive=exclusive,
-                                    requirements=requirements,
-                                    specilizations=specilizations
-                                )
+                        option_name = option_data['name']
+                        description = option_data.get('description', '')
+                        weight = float(option_data.get('weight', 1.0))
+                        min = int(option_data.get('min', 1))
+                        max = int(option_data.get('max', 1))
+
+                        exclusive_options: list[EntityOption] = []
+                        if 'exclusive' in option_data:
+                            for exclusive_option in option_data.get('exclusive', []):
+                                # Search for the exclusive option in the global options list 
+                                existing_exclusive_option_index = index_in_options_list(EntityOption(name=exclusive_option), options_list)
+                                if existing_exclusive_option_index is not None:
+                                    exclusive_options.append(options_list[existing_exclusive_option_index])
+                                else:
+                                    exclusive_options.append(EntityOption(name=exclusive_option))
+
+                        requirements: list[str] = option_data.get('requirements', [])
+
+                        specializations: list[EntityOption] = []
+                        if 'specializations' in option_data:
+                            for specialization in option_data.get('specializations', []):
+                                # Search for the specialization option in the global options list 
+                                existing_specialization_index = index_in_options_list(EntityOption(name=specialization, type=OptionTypes.SPECIALIZATION), options_list)
+                                if existing_specialization_index is not None:
+                                    specializations.append(options_list[existing_specialization_index])
+                                else:
+                                    specializations.append(EntityOption(name=specialization, type=OptionTypes.SPECIALIZATION))
+
+                        # Find or create the EntityOption in the options_list using the local member variables
+                        upsert_entity_option(EntityOption(
+                            type = option_type,
+                            name = option_name,
+                            description = description,
+                            weight = weight,
+                            min = min,
+                            max = max,
+                            mutually_exclusive = exclusive_options,
+                            requirements = requirements,
+                            specilizations = specializations
                             )
+                        )
                     except KeyError as e:
                         raise ValueError(f"Invalid JSON data: {e}")
                     except ValueError as e:
@@ -513,6 +517,53 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
 
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Input options file not found at {input_file_path}.")
+
+def index_in_options_list(option: EntityOption, options_list: list[EntityOption]) -> int:
+    # Find the index of the existing option in the options_list
+    if option.name is not None and option.type is not None:
+        try:
+            existing_option_index = next(i for i, opt in enumerate(options_list) 
+                                        if opt.type == option.type and opt.name == option.name)
+        except StopIteration:
+            existing_option_index = None
+    elif option.name is not None:
+        try:
+            existing_option_index = next(i for i, opt in enumerate(options_list) 
+                                        if opt.name == option.name)
+        except StopIteration:
+            existing_option_index = None
+    else:
+        existing_option_index = None
+    return existing_option_index
+
+def upsert_entity_option(option: EntityOption, options_list: list[EntityOption]) -> None:
+    option_type: OptionTypes = option.type
+    option_name: str = option.name
+    description: str = option.description
+    weight: float = option.weight
+    min: int = option.min
+    max: int = option.max
+    exclusive_options: list[EntityOption] = option.mutually_exclusive
+    requirements: list[str] = option.requirements
+    specializations: list[EntityOption] = option.specilizations
+
+    existing_option_index = index_in_options_list(EntityOption(name=option_name, type=option_type), options_list)
+
+    if existing_option_index is not None:
+        existing_option = options_list[existing_option_index]
+        # Update existing option with new values 
+        existing_option.description = description
+        existing_option.weight = weight
+        existing_option.min = min
+        existing_option.max = max
+        existing_option.mutually_exclusive.extend(exclusive_options)
+        existing_option.requirements += requirements
+        existing_option.specilizations.extend(specializations)
+        # Save it back to the existing option in the options_list
+        options_list[existing_option_index] = existing_option
+    else:   
+        # Append new EntityOption to the options_list
+        options_list.append(option)
 
 def is_valid_results_output_mode(results_output_mode) -> bool:
     return results_output_mode in OutputMode
@@ -597,6 +648,7 @@ def create_random_person(entities: EntityGraph, options_list: list[EntityOption]
 
     # Generate random entities
     person: Person = factory.create_random_entity()
+    logger.warning(f"Person: {person}")
     logger.warning(f"Attributes of created Person: {person.attributes}")
     entities.add(person)
 
@@ -688,21 +740,21 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
 def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, options_list: list[EntityOption]) -> None:
     
     while tracker.entity_stack:
-        entity = tracker.entity_stack.pop()
-        if isinstance(entity, Person):    
+        entity_type = tracker.entity_stack.pop()
+        if entity_type == Person:    
             person = create_random_person(entities, options_list)
             entities.add(person)
-        elif isinstance(entity, Location):
+        elif entity_type == Location:
             location = create_random_location(entities, options_list)
             entities.add(location)
-        elif isinstance(entity, Organization):
+        elif entity_type == Organization:
             organization = create_random_organization(entities, options_list)
             entities.add(organization)
-        elif isinstance(entity, GeoPoliticalEntity):
+        elif entity_type == GeoPoliticalEntity:
             gpe = create_random_gpe(entities, options_list)
             entities.add(gpe)
         else:
-            raise TypeError(f"Invalid entity type: {entity}")
+            raise TypeError(f"Invalid entity type: {entity_type}")
 
 if __name__ == "__main__":
     main()

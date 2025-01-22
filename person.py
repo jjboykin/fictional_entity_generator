@@ -20,4 +20,4 @@ class Person(Species):
         if not self.given_name or not self.family_name:
             raise ValueError("First and last name are required fields")   
             
-        object.__setattr__(self, "name", f"{self.first_name} {self.last_name}")
+        object.__setattr__(self, "name", f"{self.given_name} {self.family_name}")

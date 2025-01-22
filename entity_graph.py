@@ -6,7 +6,7 @@ class EntityGraph(Graph):
     def __init__(self) -> None:
         super().__init__()
         self.graph: dict = {Entity: set()}
-        self.metadata: dict = {tuple(Entity, Entity): dict()}
+        self.metadata: dict = {tuple[Entity, Entity]: dict()}
     
     def add(self, node: Entity) -> Entity:
         if not isinstance(node, Entity):

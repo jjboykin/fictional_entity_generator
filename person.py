@@ -22,7 +22,7 @@ class Person(Species):
 
             middle_name = ""
             for i in range (1, len(self.attributes[OptionTypes.NAME])):
-                middle_name = f"self.attributes[OptionTypes.NAME][i] "
+                middle_name = f"{self.attributes[OptionTypes.NAME][i]} "
             middle_name = middle_name.strip()
             object.__setattr__(self, "middle_name", middle_name)
         
@@ -34,8 +34,12 @@ class Person(Species):
             
         object.__setattr__(self, "name", f"{self.given_name} {self.family_name}")
 
-        age_option: EntityOption = self.attributes[OptionTypes.AGE][0]
-        object.__setattr__(self, "age", self.determine_age(age_option.name))
+        if OptionTypes.AGE in self.attributes:
+            age_option: EntityOption = self.attributes[OptionTypes.AGE][0]
+            object.__setattr__(self, "age", self.determine_age(age_option.name))
+
+        if OptionTypes.SEX in self.attributes:
+            object.__setattr__(self, "sex", self.attributes[OptionTypes.SEX][0])
     
     def __hash__(self):
         return hash((self.id, self.name)) 

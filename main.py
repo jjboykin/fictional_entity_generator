@@ -233,7 +233,7 @@ def main():
                 elif choice == "2":
                     menu_page = "entity_view"
                 elif choice == "3":
-                    process_entities_stack(entities, tracker)
+                    process_entities_stack(entities, tracker, options_list)
                     menu_page = "main"
                 elif choice == "4":
                     menu_page = "config"
@@ -277,15 +277,30 @@ def main():
                     print("Invalid choice. Please try again.")
             case "entity_view":
                 if choice == "1":
-                    pass
+                    print(f"------------------------------------------------------------------------------------------\n")
+                    for entity in entities.graph.keys():
+                        if isinstance(entity, Person):
+                            display_person(entity)
+                            print("------------------------------")
                 elif choice == "2":
-                    pass
+                    for entity in entities.graph.keys():
+                        if isinstance(entity, Location):
+                            display_person(entity)
+                            print("------------------------------")
                 elif choice == "3":
-                    pass
+                    for entity in entities.graph.keys():
+                        if isinstance(entity, Organization):
+                            display_person(entity)
+                            print("------------------------------")
                 elif choice == "4":
-                    pass
+                    for entity in entities.graph.keys():
+                        if isinstance(entity, GeoPoliticalEntity):
+                            display_person(entity)
+                            print("------------------------------")
                 elif choice == "5":
-                    pass
+                    for entity in entities.graph.keys():
+                        display_person(entity)
+                        print("------------------------------")
                 else:
                     print("Invalid choice. Please try again.")
             case "config":
@@ -909,9 +924,9 @@ def create_random_person(entities: EntityGraph, options_list: list[EntityOption]
 
     # Generate random person entity
     person: Person = factory.create_random_entity(options_list)
-    species_option: EntityOption = person.attributes[OptionTypes.RACE][0]
-    logger.warning(f"Person {person.id}: {person.name}, age={person.age}, species={species_option}")
-    logger.warning(f"Attributes of created Person: {person.attributes}")
+    species: EntityOption = person.attributes[OptionTypes.RACE][0]
+    logger.warning(f"Person {person.id}: {person.name}, age={person.age}, species={species} sex={person.sex}")
+    #logger.warning(f"Attributes of created Person: {person.attributes}")
     entities.add(person)
 
     return person
@@ -986,6 +1001,11 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     gpe.organization = create_random_organization()
     
     return gpe
+
+def display_person(person: Person) -> None:
+    species: EntityOption = person.attributes[OptionTypes.RACE][0]
+    print(f"Person {person.id}: {person.name}, age={person.age}, species={species} sex={person.sex}")
+    print(f"Attributes of created Person: {person.attributes}")
 
 def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, options_list: list[EntityOption]) -> None:
     """

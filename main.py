@@ -402,7 +402,7 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
     # TODO: Change read_input_options_file function to load and save the random 
     # options into the options list from the default or passed file, using a flag 
     # to determine whether to add to or override the default options
-    
+
     try:
         if input_file_path.endswith(".csv"):
             with open(input_file_path, 'r') as file:
@@ -738,7 +738,20 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     return gpe
 
 def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, options_list: list[EntityOption]) -> None:
-    
+    """
+    Processes the tracker's entity stack by popping the top entity class off and creating a random instance 
+    of an entity using the passed in options list and adding it to the graph for each entity type within 
+    until the stack is empty.
+
+    args:
+        entities: An instance of the EntityGraph class to add the created entities to.
+        tracker: An instance of the EntityTracker class to manage the entity stack.
+        options: A list of EntityOption objects to use for randomization.
+
+    returns:
+        none
+    """
+    # TODO: Evalute the necessary relationships to other entities and add them to the graph as well if they are not already present
     while tracker.entity_stack:
         entity_type = tracker.entity_stack.pop()
         if entity_type == Person:    

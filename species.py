@@ -17,4 +17,33 @@ class Species(Entity):
     
     def __post_init__(self):
         super().__post_init__()
-    
+
+'''   
+TODO: Implement age ranges for species 
+if "young" == trait.lower():
+    age = random.randint(1, 18)
+    break
+if "old" == trait.lower():
+    age = random.randint(18, 100)
+    break
+if "middle-aged" == trait.lower():
+    age = random.randint(30, 60)
+    break
+if "elderly" == trait.lower():
+    age = random.randint(60, 100)
+    break
+if "child" == trait.lower():
+    age = random.randint(1, 12)
+    break
+if "teen" == trait.lower():
+    age = random.randint(13, 18)
+    break
+if "adult" == trait.lower():
+    age = random.randint(18, 60)
+    break
+if "baby" == trait.lower():
+    age = random.randint(0, 1)
+    break
+if "toddler" == trait.lower():
+    age = random.randint(1, 3)
+    break'''

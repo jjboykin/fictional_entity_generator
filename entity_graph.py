@@ -1,12 +1,13 @@
 from graph import Graph
 from entity import Entity
+from static_options import EntityTypes
 
 class EntityGraph(Graph):
 
     def __init__(self) -> None:
         super().__init__()
-        self.graph: dict = {Entity: set()}
-        self.metadata: dict = {tuple[Entity, Entity]: dict()}
+        self.graph: dict[Entity: list] = {}
+        self.metadata: dict[tuple[Entity, Entity]: dict] = {}
     
     def add(self, node: Entity) -> Entity:
         if not isinstance(node, Entity):
@@ -27,7 +28,8 @@ class EntityGraph(Graph):
         if existing_node:
             return existing_node  # Return the existing node
 
-        self.graph[node] = set()
+        self.graph[node] = []
+
         return node
 
     def add_edge(self, node1: Entity, node2: Entity) -> None:
@@ -98,11 +100,11 @@ class EntityGraph(Graph):
         if metadata is not None:
             self.add_metadata_reciprocal(node1, node2, metadata)
 
-    def count(self, type=None) -> int:
+    def count(self, type: EntityTypes = None) -> int:
         if type:
             count:int = 0
-            for i in range (0, len(self.graph)):
-                if eval(type.value) == self.graph[i]:
+            for node in self.graph.keys():
+                if isinstance(node, type.value):
                     count += 1
             return count
         else:
@@ -130,6 +132,7 @@ class EntityGraph(Graph):
     
     def get_node_by_identifier(self, node:Entity) -> Entity:
         for existing_node in self.graph.keys():
+            print(existing_node)
             # Assuming 'name' is the identifier
             if existing_node.name == node.name:  
                 return existing_node

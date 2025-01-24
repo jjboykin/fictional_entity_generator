@@ -23,7 +23,7 @@ class OutputMode(Enum):
     ALL = "all"
 
 class EntityTypes(Enum):
-    PERSON = Person.__name__
-    LOCATION = Location.__name__
-    ORGANIZATION = Organization.__name__
-    GPE = GeoPoliticalEntity.__name__
+    PERSON = Person
+    LOCATION = Location
+    ORGANIZATION = Organization
+    GPE = GeoPoliticalEntity

@@ -8,7 +8,7 @@ from static_options import InputOptionsFileFormat, OutputResultsFileFormat, Outp
 
 from entity import Entity
 from entity_graph import EntityGraph
-from entity_option import EntityOption, OptionTypes
+from entity_option import EntityOption, OptionTypes, EntityOptionListFlag
 from entity_factory import EntityFactory
 from entity_tracker import EntityTracker
 from species import Species
@@ -38,9 +38,9 @@ def main():
     input_file_path: str = None 
     tracker: EntityTracker = EntityTracker()
     entities: EntityGraph = EntityGraph()
+    #entities: Graph = Graph()
 
-    # TODO: Create an import file to test the options list with
-    options_list: list[EntityOption] = []
+    options_list: list[EntityOption] = get_default_options_list()
 
     '''Setup Logging'''
     logger = logging.getLogger(__name__)
@@ -153,7 +153,8 @@ def main():
         input_file_path = args.file
         if is_valid_input_options_file(input_file_path):
             try:
-                read_input_options_file(input_file_path)
+                # TODO: Create an import file to test the options list with
+                read_input_options_file(input_file_path, options_list)
             except Exception as e:
                 logger.error(f"Error: {e}")
                 return None
@@ -379,6 +380,244 @@ def generate_menu_test(entities: Graph, tracker: EntityTracker) -> None:
     print("1. Test Graph with Person objects")
     print("2. Create Random Person")
 
+def get_default_options_list() -> list[EntityOption]:
+    """
+    Returns an EntityOptions list populated with the hardcoded default options
+
+    returns:
+        list[EntityOption]: A list of EntityOption objects.
+    """
+    default_options_list: list[EntityOption] = []
+    try:
+        # Load the default options list from the hardcoded default options
+        default_options_list = [
+            # Age
+            EntityOption(name="Young", type=OptionTypes.AGE, description="A child, adolescent, or early adult"),
+            EntityOption(name="Old", type=OptionTypes.AGE, description="Elderly or advanced in years"),
+            EntityOption(name="Middle-aged", type=OptionTypes.AGE, description="Between young and old"),
+            EntityOption(name="Adult", type=OptionTypes.AGE, description="Mature and fully grown"),
+            EntityOption(name="Teen", type=OptionTypes.AGE, description="Adolescent or young adult"),
+            EntityOption(name="Baby", type=OptionTypes.AGE, description="Infant or very young child"),
+            EntityOption(name="Toddler", type=OptionTypes.AGE, description="Young child learning to walk"),
+
+            # Background
+            EntityOption(name="Academic", type=OptionTypes.BACKGROUND, description="Educated and scholarly"),
+            EntityOption(name="Apprentice", type=OptionTypes.BACKGROUND, description="Learned a trade from a master"),
+            EntityOption(name="Aristocrat", type=OptionTypes.BACKGROUND, description="Born into privilege and wealth"),
+            EntityOption(name="Criminal", type=OptionTypes.BACKGROUND, description="Life of petty or grand theft"),
+            EntityOption(name="Entertainer", type=OptionTypes.BACKGROUND, description="Musicians, actors, dancers, etc."),
+            EntityOption(name="Explorer", type=OptionTypes.BACKGROUND, description="Traveled extensively"),
+            EntityOption(name="Far Traveler", type=OptionTypes.BACKGROUND, description="From a distant land"),
+            EntityOption(name="Folk Hero", type=OptionTypes.BACKGROUND, description="Champion of the common people"),
+            EntityOption(name="Guild Artisan", type=OptionTypes.BACKGROUND, description="Member of a skilled guild"),
+            EntityOption(name="Hermit", type=OptionTypes.BACKGROUND, description="Lived in seclusion for an extended period"),
+            EntityOption(name="Noble", type=OptionTypes.BACKGROUND, description="Of high social standing"),
+            EntityOption(name="Outlaw", type=OptionTypes.BACKGROUND, description="A fugitive from justice"),
+            EntityOption(name="Pirate", type=OptionTypes.BACKGROUND, description="Life of piracy and plunder"),
+            EntityOption(name="Sage", type=OptionTypes.BACKGROUND, description="Dedicated to the pursuit of knowledge"),
+            EntityOption(name="Sailor", type=OptionTypes.BACKGROUND, description="Life at sea"),
+            EntityOption(name="Soldier", type=OptionTypes.BACKGROUND, description="Served in a military or paramilitary force"),
+            EntityOption(name="Spy", type=OptionTypes.BACKGROUND, description="Trained in espionage and subterfuge"),
+            EntityOption(name="Urbanite", type=OptionTypes.BACKGROUND, description="Grew up in a large city"),
+            EntityOption(name="Wanderer", type=OptionTypes.BACKGROUND, description="Traveled extensively with no fixed abode"),
+            EntityOption(name="Zealot", type=OptionTypes.BACKGROUND, description="Fanatically devoted to a cause or deity"),
+
+            # Climate
+            EntityOption(name="Temperate", type=OptionTypes.CLIMATE, description="Mild weather with four distinct seasons"),
+            EntityOption(name="Tropical", type=OptionTypes.CLIMATE, description="Hot and humid year-round"),
+            EntityOption(name="Arid", type=OptionTypes.CLIMATE, description="Hot and dry with little rainfall"),
+            EntityOption(name="Tundra", type=OptionTypes.CLIMATE,  description="Frigid and icy with short summers"),
+            EntityOption(name="Subarctic", type=OptionTypes.CLIMATE, description="Long, cold winters and short, cool summers"),
+            EntityOption(name="Mediterranean", type=OptionTypes.CLIMATE, description="Warm, dry summers and mild, wet winters"),
+            EntityOption(name="Highland", type=OptionTypes.CLIMATE, description="Cool summers and cold, snowy winters"),
+            EntityOption(name="Oceanic", type=OptionTypes.CLIMATE, description="Mild temperatures and frequent precipitation"),
+            EntityOption(name="Continental", type=OptionTypes.CLIMATE, description="Large variations in temperature between summer and winter"),
+            EntityOption(name="Tropical Monsoon", type=OptionTypes.CLIMATE, description="Hot and humid with distinct wet and dry seasons"),
+
+            # Family Name
+            EntityOption(name="Stoneshield", type=OptionTypes.FAMILY_NAME, description="Strong and defensive"),
+            EntityOption(name="Whisperwind", type=OptionTypes.FAMILY_NAME, description="Agile and stealthy"),
+            EntityOption(name="Silverflow", type=OptionTypes.FAMILY_NAME, description="Magical and arcane"),
+            EntityOption(name="Everflame", type=OptionTypes.FAMILY_NAME, description="Passionate and fiery"),
+            EntityOption(name="Greenhaven", type=OptionTypes.FAMILY_NAME, description="Nature-connected and nurturing"),
+            EntityOption(name="Stormbringer", type=OptionTypes.FAMILY_NAME, description="Powerful and destructive"),
+            EntityOption(name="Brightwood", type=OptionTypes.FAMILY_NAME, description="Optimistic and hopeful"),
+            EntityOption(name="Shadowheart", type=OptionTypes.FAMILY_NAME, description="Mysterious and secretive"),
+            EntityOption(name="Moonsilver", type=OptionTypes.FAMILY_NAME, description="Elusive and mystical"),
+            EntityOption(name="Goldforge", type=OptionTypes.FAMILY_NAME, description="Skilled artisans and crafters"),
+
+            # Name
+            EntityOption(name="Anya", type=OptionTypes.NAME),
+            EntityOption(name="Elora", type=OptionTypes.NAME),
+            EntityOption(name="Kael", type=OptionTypes.NAME),
+            EntityOption(name="Bron", type=OptionTypes.NAME),
+            EntityOption(name="Gwyn", type=OptionTypes.NAME),
+            EntityOption(name="Zara", type=OptionTypes.NAME),
+            EntityOption(name="Krog", type=OptionTypes.NAME),
+            EntityOption(name="Lysander", type=OptionTypes.NAME),
+            EntityOption(name="Seraphina", type=OptionTypes.NAME),
+            EntityOption(name="Orion", type=OptionTypes.NAME),
+
+            # Nickname
+            EntityOption(name="The Swift", type=OptionTypes.NICKNAME, description="Known for speed and agility"),
+            EntityOption(name="The Silent", type=OptionTypes.NICKNAME, description="Known for stealth and cunning"),
+            EntityOption(name="The Wise", type=OptionTypes.NICKNAME, description="Known for intelligence and wisdom"),
+            EntityOption(name="The Strong", type=OptionTypes.NICKNAME, description="Known for physical strength and power"),
+            EntityOption(name="The Bold", type=OptionTypes.NICKNAME, description="Known for courage and bravery"),
+            EntityOption(name="The Wanderer", type=OptionTypes.NICKNAME, description="Known for their travels and explorations"),
+            EntityOption(name="The Healer", type=OptionTypes.NICKNAME, description="Known for their healing abilities"),
+            EntityOption(name="The Shadow", type=OptionTypes.NICKNAME, description="Known for their mysterious nature"),
+            EntityOption(name="The Jester", type=OptionTypes.NICKNAME, description="Known for their wit and humor"),
+            EntityOption(name="The Scholar", type=OptionTypes.NICKNAME, description="Known for their vast knowledge"),
+
+            # Personality Trait
+            EntityOption(name="Brave", type=OptionTypes.PERSONALITY_TRAIT, description="Courageous and fearless"),
+            EntityOption(name="Compassionate", type=OptionTypes.PERSONALITY_TRAIT, description="Kind and caring towards others"),
+            EntityOption(name="Curious", type=OptionTypes.PERSONALITY_TRAIT, description="Eager to learn and explore"),
+            EntityOption(name="Determined", type=OptionTypes.PERSONALITY_TRAIT, description="Resolute and unwavering in their goals"),
+            EntityOption(name="Dishonest", type=OptionTypes.PERSONALITY_TRAIT, description="Untrustworthy and deceitful"),
+            EntityOption(name="Greedy", type=OptionTypes.PERSONALITY_TRAIT, description="Driven by a desire for wealth and power"),
+            EntityOption(name="Impatient", type=OptionTypes.PERSONALITY_TRAIT, description="Easily frustrated and restless"),
+            EntityOption(name="Jealous", type=OptionTypes.PERSONALITY_TRAIT, description="Envious of others' success"),
+            EntityOption(name="Loyal", type=OptionTypes.PERSONALITY_TRAIT, description="Faithful and devoted to their friends and allies"),
+            EntityOption(name="Suspicious", type=OptionTypes.PERSONALITY_TRAIT, description="Distrustful and wary of others"),
+
+            # Physical Trait
+            EntityOption(name="Agile", type=OptionTypes.PHYSICAL_TRAIT, description="Nimble and quick"),
+            EntityOption(name="Delicate Features", type=OptionTypes.PHYSICAL_TRAIT, description="Graceful and refined appearance"),
+            EntityOption(name="Scarred Face", type=OptionTypes.PHYSICAL_TRAIT, description="A visible mark from a past injury"),
+            EntityOption(name="Unusual Hair Color", type=OptionTypes.PHYSICAL_TRAIT, description="Unique hair color, such as silver or purple"),
+            EntityOption(name="Missing Limb", type=OptionTypes.PHYSICAL_TRAIT, description="Lost a limb due to injury or accident"),
+            EntityOption(name="Tall", type=OptionTypes.PHYSICAL_TRAIT, description="Taller than average"),
+            EntityOption(name="Short", type=OptionTypes.PHYSICAL_TRAIT, description="Shorter than average"),
+            EntityOption(name="Piercing Eyes", type=OptionTypes.PHYSICAL_TRAIT, description="Intense and penetrating eyes"),
+            EntityOption(name="Distinctive Voice", type=OptionTypes.PHYSICAL_TRAIT, description="A unique and memorable voice"),
+
+            # Profession
+            EntityOption(name="Blacksmith", type=OptionTypes.PROFESSION, description="Crafts weapons and armor"),
+            EntityOption(name="Farmer", type=OptionTypes.PROFESSION, description="Cultivates crops and raises livestock"),
+            EntityOption(name="Hunter", type=OptionTypes.PROFESSION, description="Provides food for the community through hunting"),
+            EntityOption(name="Merchant", type=OptionTypes.PROFESSION, description="Trades goods and services"),
+            EntityOption(name="Scholar", type=OptionTypes.PROFESSION, description="Studies knowledge and teaches others"),
+            EntityOption(name="Soldier", type=OptionTypes.PROFESSION, description="Protects the community from threats"),
+            EntityOption(name="Fisherman", type=OptionTypes.PROFESSION, description="Provides food by fishing in local waters"),
+            EntityOption(name="Woodcutter", type=OptionTypes.PROFESSION, description="Provides lumber for construction and other uses"),
+            EntityOption(name="Cook", type=OptionTypes.PROFESSION, description="Prepares food for the community"),
+            EntityOption(name="Herbalist", type=OptionTypes.PROFESSION, description="Collects and uses medicinal plants"),
+
+            # Relationship
+            EntityOption(name="Spouse", type=OptionTypes.RELATIONSHIP, description="Married to another individual"),
+            EntityOption(name="Sibling", type=OptionTypes.RELATIONSHIP, description="Brother or sister"),
+            EntityOption(name="Parent", type=OptionTypes.RELATIONSHIP, description="Has children"),
+            EntityOption(name="Child", type=OptionTypes.RELATIONSHIP, description="Has parents"),
+            EntityOption(name="Friend", type=OptionTypes.RELATIONSHIP, description="Close companion"),
+            EntityOption(name="Rival", type=OptionTypes.RELATIONSHIP, description="Competitor or enemy"),
+            EntityOption(name="Mentor", type=OptionTypes.RELATIONSHIP, description="Provides guidance and training"),
+            EntityOption(name="Apprentice", type=OptionTypes.RELATIONSHIP, description="Learns from a mentor"),
+            EntityOption(name="Enemy", type=OptionTypes.RELATIONSHIP, description="An active opponent"),
+            EntityOption(name="Ally", type=OptionTypes.RELATIONSHIP, description="A trusted friend and supporter"),
+
+            # Race
+            EntityOption(name="Human", type=OptionTypes.RACE, description="Common and adaptable race"),
+            EntityOption(name="Elf", type=OptionTypes.RACE, description="Longevity and connection to nature"),
+            EntityOption(name="Dwarf", type=OptionTypes.RACE, description="Sturdy and resilient, skilled in mining and crafting"),
+            EntityOption(name="Orc", type=OptionTypes.RACE, description="Strong and warlike, often misunderstood"),
+            EntityOption(name="Goblin", type=OptionTypes.RACE, description="Small and mischievous, known for trickery"),
+            EntityOption(name="Halfling", type=OptionTypes.RACE, description="Small and agile, known for luck and charm"),
+            EntityOption(name="Dragonborn", type=OptionTypes.RACE, description="Powerful and draconic heritage"),
+            EntityOption(name="Gnome", type=OptionTypes.RACE, description="Small and inventive, skilled in magic and technology"),
+            EntityOption(name="Tiefling", type=OptionTypes.RACE, description="Demonic heritage, often associated with magic"),
+            EntityOption(name="Aarakocra", type=OptionTypes.RACE, description="Bird-like humanoids, skilled in flight"),
+
+            # Resources
+            EntityOption(name="Gold", type=OptionTypes.RESOURCES, description="Valuable currency"),
+            EntityOption(name="Land", type=OptionTypes.RESOURCES, description="Property and territory"),
+            EntityOption(name="Food", type=OptionTypes.RESOURCES, description="Supplies for sustenance"),
+            EntityOption(name="Water", type=OptionTypes.RESOURCES, description="Access to clean water sources"),
+            EntityOption(name="Wood", type=OptionTypes.RESOURCES, description="Lumber for construction and other uses"),
+            EntityOption(name="Iron", type=OptionTypes.RESOURCES, description="Metal for tools and weapons"),
+            EntityOption(name="Stone", type=OptionTypes.RESOURCES, description="Building materials and tools"),
+            EntityOption(name="Magic", type=OptionTypes.RESOURCES, description="Access to magical power or items"),
+            EntityOption(name="Influence", type=OptionTypes.RESOURCES, description="Political power and connections"),
+            EntityOption(name="Knowledge", type=OptionTypes.RESOURCES, description="Access to information and learning"),
+
+            # Role
+            EntityOption(name="Leader", type=OptionTypes.ROLE, description="Guides and directs others"),
+            EntityOption(name="Guardian", type=OptionTypes.ROLE, description="Protects and defends others"),
+            EntityOption(name="Artisan", type=OptionTypes.ROLE, description="Creates and crafts valuable items"),
+            EntityOption(name="Scholar", type=OptionTypes.ROLE, description="Seeks and shares knowledge"),
+            EntityOption(name="Explorer", type=OptionTypes.ROLE, description="Seeks adventure and discovery"),
+            EntityOption(name="Rogue", type=OptionTypes.ROLE, description="Operates in secrecy and cunning"),
+            EntityOption(name="Mystic", type=OptionTypes.ROLE, description="Possesses magical abilities"),
+            EntityOption(name="Warrior", type=OptionTypes.ROLE, description="A skilled combatant"),
+            EntityOption(name="Diplomat", type=OptionTypes.ROLE, description="Negotiates and resolves conflicts"),
+            EntityOption(name="Healer", type=OptionTypes.ROLE, description="Provides medical care and healing"),
+
+            #Sex
+            EntityOption(name="Male", type=OptionTypes.SEX),
+            EntityOption(name="Female", type=OptionTypes.SEX),
+            #EntityOption(name="Intersex", type=OptionTypes.SEX),
+
+            #Skill
+            EntityOption(name="Acrobatics", type=OptionTypes.SKILL, description="Balance, agility, tumbling"),
+            EntityOption(name="Animal Handling", type=OptionTypes.SKILL, description="Interact with animals"),
+            EntityOption(name="Athletics", type=OptionTypes.SKILL, description="Strength or dexterity-based feats of physical exertion"),
+            EntityOption(name="Deception", type=OptionTypes.SKILL, description="Tricking or deceiving others"),
+            EntityOption(name="Diplomacy", type=OptionTypes.SKILL, description="Persuasion and social interaction"),
+            EntityOption(name="Insight", type=OptionTypes.SKILL, description="Detect lies and hidden meanings"),
+            EntityOption(name="Intimidation", type=OptionTypes.SKILL, description="Frighten or coerce others"),
+            EntityOption(name="Investigation", type=OptionTypes.SKILL, description="Gather information and solve mysteries"),
+            EntityOption(name="Medicine", type=OptionTypes.SKILL, description="Treat injuries and diseases"),
+            EntityOption(name="Nature", type=OptionTypes.SKILL, description="Knowledge of the natural world"),
+            EntityOption(name="Perception", type=OptionTypes.SKILL, description="Notice hidden things"),
+            EntityOption(name="Performance", type=OptionTypes.SKILL, description="Entertain others with music, dance, or acting"),
+            EntityOption(name="Persuasion", type=OptionTypes.SKILL, description="Influence others through charm and reason"),
+            EntityOption(name="Religion", type=OptionTypes.SKILL, description="Knowledge of deities, faiths, and religious lore"),
+            EntityOption(name="Sleight of Hand", type=OptionTypes.SKILL, description="Dexterity, sleight of hand, and quick thinking"),
+            EntityOption(name="Stealth", type=OptionTypes.SKILL, description="Move quietly and unseen"),
+            EntityOption(name="Survival", type=OptionTypes.SKILL, description="Survive in the wilderness"),
+
+
+            # Terrain
+            EntityOption(name="Forest", type=OptionTypes.TERRAIN, description="Densely wooded area"),
+            EntityOption(name="Mountain", type=OptionTypes.TERRAIN, description="High, rocky terrain"),
+            EntityOption(name="Desert", type=OptionTypes.TERRAIN, description="Dry, sandy landscape"),
+            EntityOption(name="Swamp", type=OptionTypes.TERRAIN, description="Wetlands with stagnant water"),
+            EntityOption(name="Plains", type=OptionTypes.TERRAIN, description="Flat, grassy land"),
+            EntityOption(name="Coast", type=OptionTypes.TERRAIN, description="Land bordering the sea"),
+            EntityOption(name="Tundra", type=OptionTypes.TERRAIN, description="Treeless Arctic or subarctic region"),
+            EntityOption(name="Jungle", type=OptionTypes.TERRAIN, description="Dense tropical rainforest"),
+            EntityOption(name="Cave", type=OptionTypes.TERRAIN, description="Natural underground cavity"),
+            EntityOption(name="Volcano", type=OptionTypes.TERRAIN, description="Mountain with an opening that erupts lava"),
+
+             # Type 
+            EntityOption(name="Village", type=OptionTypes.TYPE, description="Small community of people"),
+            EntityOption(name="City", type=OptionTypes.TYPE, description="Large urban center"),
+            EntityOption(name="Castle", type=OptionTypes.TYPE, description="Fortified residence of a noble"),
+            EntityOption(name="Temple", type=OptionTypes.TYPE, description="Place of worship"),
+            EntityOption(name="Tavern", type=OptionTypes.TYPE, description="Place to eat, drink, and socialize"),
+            EntityOption(name="Market", type=OptionTypes.TYPE, description="Place for buying and selling goods"),
+            EntityOption(name="Library", type=OptionTypes.TYPE, description="Place for storing and accessing books"),
+            EntityOption(name="Forest", type=OptionTypes.TYPE, description="Densely wooded area"),
+            EntityOption(name="Cave", type=OptionTypes.TYPE, description="Natural underground cavity"),
+            EntityOption(name="Ruins", type=OptionTypes.TYPE, description="Remains of an ancient civilization"),
+
+            # Unique Trait
+            EntityOption(name="Sixth Sense", type=OptionTypes.UNIQUE, description="An uncanny ability to predict danger"),
+            EntityOption(name="Animal Companion", type=OptionTypes.UNIQUE, description="A loyal animal companion"),
+            EntityOption(name="Magical Affinity", type=OptionTypes.UNIQUE, description="A natural talent for magic"),
+            EntityOption(name="Precognition", type=OptionTypes.UNIQUE, description="The ability to foresee future events"),
+            EntityOption(name="Regeneration", type=OptionTypes.UNIQUE, description="The ability to heal quickly"),
+            EntityOption(name="Superhuman Strength", type=OptionTypes.UNIQUE, description="Exceptional physical strength"),
+            EntityOption(name="Telepathy", type=OptionTypes.UNIQUE, description="The ability to read minds"),
+            EntityOption(name="Shape-shifting", type=OptionTypes.UNIQUE, description="The ability to change one's appearance"),
+            EntityOption(name="Invisibility", type=OptionTypes.UNIQUE, description="The ability to become invisible"),
+            EntityOption(name="Elemental Control", type=OptionTypes.UNIQUE, description="The ability to control a specific element (e.g., fire, water)")
+        ]
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error: {e}")
+    return default_options_list
 
 def is_valid_input_options_file(input_file_path:str) -> bool:
     if os.path.exists(input_file_path):
@@ -387,7 +626,7 @@ def is_valid_input_options_file(input_file_path:str) -> bool:
         raise FileNotFoundError (f"Input options file not found at {input_file_path}.")
     return mime in InputOptionsFileFormat
         
-def read_input_options_file(input_file_path: str, options_list: list[EntityOption]) -> None:
+def read_input_options_file(input_file_path: str, options_list: list[EntityOption], flag:str = EntityOptionListFlag.ADD) -> None:
     """
     Reads input options from a CSV or JSON file and populates the `options_list`
     with `EntityOption` instances.
@@ -401,8 +640,13 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
     """
     # TODO: Change read_input_options_file function to load and save the random 
     # options into the options list from the default or passed file, using a flag 
-    # to determine whether to add to or override the default options
-
+    # to determine whether to add to or override the default options list.  
+    
+    if flag == EntityOptionListFlag.OVERRIDE:
+        options_list: list[EntityOption] = []
+    elif not options_list:
+        options_list: list[EntityOption] = []
+    
     try:
         if input_file_path.endswith(".csv"):
             with open(input_file_path, 'r') as file:
@@ -455,9 +699,15 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
                             )
                         )
                     except KeyError as e:
-                        raise ValueError(f"Invalid CSV header: {e}")
+                        logger = logging.getLogger(__name__)
+                        err_msg = f"Invalid CSV header: {e}"
+                        logger.error(err_msg)
+                        raise ValueError(err_msg)
                     except ValueError as e:
-                        raise ValueError(f"Invalid data in CSV: {e}")
+                        logger = logging.getLogger(__name__)
+                        err_msg = f"Invalid data in CSV: {e}"
+                        logger.error(err_msg)
+                        raise ValueError(err_msg)
 
         elif input_file_path.endswith(".json"):
             with open(input_file_path, 'r') as file:
@@ -508,12 +758,21 @@ def read_input_options_file(input_file_path: str, options_list: list[EntityOptio
                             )
                         )
                     except KeyError as e:
-                        raise ValueError(f"Invalid JSON data: {e}")
+                        logger = logging.getLogger(__name__)
+                        err_msg = f"Invalid JSON data: {e}"
+                        logger.error(err_msg)
+                        raise ValueError(err_msg)
                     except ValueError as e:
-                        raise ValueError(f"Invalid data in JSON: {e}")
+                        logger = logging.getLogger(__name__)
+                        err_msg = f"Invalid data in JSON: {e}"
+                        logger.error(err_msg)
+                        raise ValueError(err_msg)
 
         else:
-            raise ValueError(f"Unsupported file format: {input_file_path}")
+            logger = logging.getLogger(__name__)
+            err_msg = f"Unsupported file format: {input_file_path}"
+            logger.error(err_msg)
+            raise ValueError(err_msg)
 
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Input options file not found at {input_file_path}.")
@@ -627,6 +886,7 @@ def create_random_person(entities: EntityGraph, options_list: list[EntityOption]
     logger.warning(f"Executing {create_random_person.__name__}...")
     
     applicable_option_types = {
+        OptionTypes.AGE: (1, 1),
         OptionTypes.BACKGROUND: (1, 2),
         OptionTypes.FAMILY_NAME: (1, 1),
         OptionTypes.NAME: (1, 2),
@@ -637,6 +897,7 @@ def create_random_person(entities: EntityGraph, options_list: list[EntityOption]
         OptionTypes.RACE: (1, 1),
         OptionTypes.ROLE: (0, 3),
         OptionTypes.RELATIONSHIP: (1, 10),
+        OptionTypes.SEX: (1, 1),
         OptionTypes.SPECIALIZATION: (0, 2),
         OptionTypes.SKILL: (1, 6),
         OptionTypes.UNIQUE: (0, 2)
@@ -646,23 +907,12 @@ def create_random_person(entities: EntityGraph, options_list: list[EntityOption]
     factory: EntityFactory = EntityFactory(Person, applicable_option_types, options_list)
     logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
-    # Generate random entities
-    person: Person = factory.create_random_entity()
-    logger.warning(f"Person: {person}")
+    # Generate random person entity
+    person: Person = factory.create_random_entity(options_list)
+    species_option: EntityOption = person.attributes[OptionTypes.RACE][0]
+    logger.warning(f"Person {person.id}: {person.name}, age={person.age}, species={species_option}")
     logger.warning(f"Attributes of created Person: {person.attributes}")
     entities.add(person)
-
-    race = person.attributes[OptionTypes.RACE][0]
-    species: Species = Species(name=race)
-    species = entities.add(species)
-
-    age: int = None
-    for trait in person.attributes[OptionTypes.PHYSICAL_TRAIT]:
-        for age_range in species.age_ranges:
-            if trait in age_range:
-                age = random.randint(age_range[0], age_range[1])
-                break    
-    object.__setattr__(person, "age", age) 
 
     return person
 
@@ -684,7 +934,7 @@ def create_random_location(entities: EntityGraph, options_list: list[EntityOptio
     logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
     # Generate random entities
-    location: Location = factory.create_random_entity()
+    location: Location = factory.create_random_entity(options_list)
     logger.warning(f"Attributes of created Location: {location.attributes}")
     
     return location
@@ -707,7 +957,7 @@ def create_random_organization(entities: EntityGraph, options_list: list[EntityO
     logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
     # Generate random entities
-    organization: Organization = factory.create_random_entity()
+    organization: Organization = factory.create_random_entity(options_list)
     logger.warning(f"Attributes of created Location: {organization.attributes}")
     
     return organization
@@ -729,7 +979,7 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
 
 
     # Generate random entities
-    gpe: GeoPoliticalEntity = factory.create_random_entity()
+    gpe: GeoPoliticalEntity = factory.create_random_entity(options_list)
     logger.warning(f"Attributes of created Location: {gpe.attributes}")
 
     gpe.location = create_random_location()
@@ -756,16 +1006,16 @@ def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, option
         entity_type = tracker.entity_stack.pop()
         if entity_type == Person:    
             person = create_random_person(entities, options_list)
-            entities.add(person)
+            #entities.add(person)
         elif entity_type == Location:
             location = create_random_location(entities, options_list)
-            entities.add(location)
+            #entities.add(location)
         elif entity_type == Organization:
             organization = create_random_organization(entities, options_list)
-            entities.add(organization)
+            #entities.add(organization)
         elif entity_type == GeoPoliticalEntity:
             gpe = create_random_gpe(entities, options_list)
-            entities.add(gpe)
+            #entities.add(gpe)
         else:
             raise TypeError(f"Invalid entity type: {entity_type}")
 

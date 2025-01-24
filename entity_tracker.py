@@ -15,3 +15,10 @@ class EntityTracker:
             return count
         else:
             return len(self.entity_stack)
+        
+    def add(self, entity: Entity) -> None:
+        self.entity_stack.append(entity)
+
+    def clear(self) -> None:
+        self.entity_stack.clear()
+

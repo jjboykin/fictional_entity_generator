@@ -43,5 +43,8 @@ class Entity():
         object.__setattr__(self, "id", uuid.uuid4())
 
         if OptionTypes.NAME in self.attributes:
-            object.__setattr__(self, "name", self.attributes[OptionTypes.NAME][0]) 
+            object.__setattr__(self, "name", self.attributes[OptionTypes.NAME][0])
+
+    def __hash__(self):
+        return hash((self.id, self.name)) 
 

@@ -40,3 +40,6 @@ class Location(Entity):
 
     def __post_init__(self):
         super().__post_init__()
+
+    def __hash__(self):
+        return hash((self.id, self.name, self.type)) 

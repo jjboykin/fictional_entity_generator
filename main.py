@@ -252,7 +252,7 @@ def main():
                     test_graph_with_person()
                     input("Press any key to continue...")
                 elif choice == "2":
-                    person = create_random_person(entities, tracker)
+                    person = create_random_person(entities, options_list)
                     input("Press any key to continue...")
                 else:
                     print("Invalid choice. Please try again.")

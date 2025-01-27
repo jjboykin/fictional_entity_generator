@@ -28,17 +28,29 @@ def main():
 
     '''Setup Method Scope Variables'''
     input_file_formats: str = ", ".join([format.value for format in InputOptionsFileFormat])
+    input_file_path: str = None
+
     results_output_file_formats: str = ", ".join([format.value for format in OutputResultsFileFormat])
     results_output_modes: str = ", ".join([format.value for format in OutputMode])
     results_output_mode: OutputMode = OutputMode.CONSOLE
     results_outfile_format: OutputResultsFileFormat = OutputResultsFileFormat.MD
     results_output_file_path: str = get_datetime_filename("results", get_extension_from_mime(results_outfile_format.value))
+    
     object_output_file_path: str = None
     object_input_file_path: str = None
-    input_file_path: str = None 
+    
+    persons_to_queue: int = 1
+    locations_to_queue: int = 0
+    organizations_to_queue: int = 0
+    gpes_to_queue: int = 0
+
+    is_config_updated: bool = False
+    is_results_output_mode_updated: bool = False
+    is_results_outfile_format_updated: bool = False
+    is_persons_to_queue_updated: bool = False
+
     tracker: EntityTracker = EntityTracker()
     entities: EntityGraph = EntityGraph()
-    #entities: Graph = Graph()
 
     options_list: list[EntityOption] = get_default_options_list()
 
@@ -60,6 +72,95 @@ def main():
     logger.addHandler(console_handler)
     logger.addHandler(rotating_file_handler)
 
+
+    '''Setup Config File Parsing'''
+    # Read config file (if it exists)
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
+    # Add missing default sections to config
+    if 'main' not in config:
+        config['main'] = {}
+        is_config_updated = True
+    else:
+        # Get `main` section parameters
+        if 'output' in config['main']:
+            if is_valid_results_output_mode(config['main']['output']):
+                results_output_mode = OutputMode(config['main']['output'])
+                is_results_output_mode_updated = True
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+
+        if 'outfile_format' in config['main']:
+            if is_valid_results_outfile_format(config['main']['outfile_format']):
+                results_outfile_format = OutputResultsFileFormat(config['main']['outfile_format'])
+                is_results_outfile_format_updated = True
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+        
+    if 'objects' not in config:
+        config['objects'] = {}
+        is_config_updated = True
+    else:
+        # Get `objects` section parameters
+        if 'person' in config['objects']:
+            value, is_valid = is_valid_config_value(config['objects']['person'], int)
+            if is_valid:
+                persons_to_queue = value
+                is_persons_to_queue_updated = True
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+
+        if 'location' in config['objects']:
+            value, is_valid = is_valid_config_value(config['objects']['location'], int)
+            if is_valid:
+                locations_to_queue = value
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+        
+        if 'organization' in config['objects']:
+            value, is_valid = is_valid_config_value(config['objects']['organization'], int)
+            if is_valid:
+                organizations_to_queue = value
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+
+        if 'geopolitical' in config['objects']:
+            value, is_valid = is_valid_config_value(config['objects']['geopolitical'], int)
+            if is_valid:
+                gpes_to_queue = value
+            else:
+                w = Exception ("Invalid configured output mode; continuing with default option.")
+                logger.warning(f"Exception: {w}")
+        else:
+            w = Exception ("No configured output mode; continuing with default option.")
+            logger.warning(f"Exception: {w}")
+
+    if is_config_updated:
+        # Write initial updated config back to file, if needed
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
+
     '''Setup Command Line Argument Parsing'''
     parser = argparse.ArgumentParser(description='Description of your program')
 
@@ -68,11 +169,23 @@ def main():
     parser.add_argument('--save_config', type=bool, help='Saves the passed configuration')
     parser.add_argument('--reset_config', type=bool, help='Resets saved configuration to default')
 
-    parser.add_argument('-out', '--output', type=str, default=f'{results_output_mode.value}', help=f'Output mode: {results_output_modes}')
-    parser.add_argument('--outfile_format', type=str, default=f'{results_outfile_format.value}', help=f'Output file formats: {results_output_file_formats}')
+    if is_results_output_mode_updated:
+        parser.add_argument('-out', '--output', type=str, help=f'Output mode: {results_output_modes}')
+    else:
+        parser.add_argument('-out', '--output', type=str, default=f'{results_output_mode.value}', help=f'Output mode: {results_output_modes}')
+
+    if is_results_outfile_format_updated:        
+        parser.add_argument('--outfile_format', type=str, help=f'Output file formats: {results_output_file_formats}')
+    else:
+        parser.add_argument('--outfile_format', type=str, default=f'{results_outfile_format.value}', help=f'Output file formats: {results_output_file_formats}')
+
     parser.add_argument('--outfile_name', type=str, help='Name to save the results file to')
-        
-    parser.add_argument('-p', '--person', type=int, default=1, help='Specifies how many person objects to generate')
+
+    if is_persons_to_queue_updated:        
+        parser.add_argument('-p', '--person', type=int, help='Specifies how many person objects to generate')
+    else:
+        parser.add_argument('-p', '--person', type=int, default=1, help='Specifies how many person objects to generate')
+
     parser.add_argument('-l', '--location', type=int, default=0, help='Specifies how many location objects to generate')
     parser.add_argument('-o', '--organization', type=int, default=0, help='Specifies how many organization objects to generate')
     parser.add_argument('-gpe', '--geopolitical', type=int, default=0, help='Specifies how many geopolitical entity objects to generate')
@@ -98,21 +211,6 @@ def main():
                 defaults[action.dest] = action.default
         reset_config(defaults)
 
-    '''Setup Config File Parsing'''
-
-    # Read config file (if it exists)
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    # Update config with command line arguments
-    if 'main' not in config:
-        config['main'] = {}
-    if 'objects' not in config:
-        config['objects'] = {}
-    # Write updated config to file
-    with open('config.ini', 'w') as configfile:
-        config.write(configfile)
-
     # Main arguments in config
     if args.output:
         if is_valid_results_output_mode(args.output):
@@ -121,15 +219,6 @@ def main():
         else:
             w = Exception ("Invalid output mode parameter; continuing with configured option.")
             logger.warning(f"Exception: {w}")
-            if config['main']['output']:
-                if is_valid_results_output_mode(config['main']['output']):
-                    results_output_mode = OutputMode(config['main']['output'])
-                else:
-                    w = Exception ("Invalid configured output mode; continuing with default option.")
-                    logger.warning(f"Exception: {w}")
-            else:
-                w = Exception ("No configured output mode; continuing with default option.")
-                logger.warning(f"Exception: {w}")
     
     if args.outfile_format:
         if is_valid_results_outfile_format(args.outfile_format):
@@ -138,15 +227,6 @@ def main():
         else:
             w = Exception ("Invalid outfile format; continuing with configured option.")
             logger.warning(f"Exception: {w}")
-            if config['main']['outfile_format']:
-                if is_valid_results_outfile_format(config['main']['outfile_format']):
-                    results_outfile_format = OutputResultsFileFormat(config['main']['outfile_format'])
-                else:
-                    w = Exception ("Invalid configured outfile format; continuing with default option.")
-                    logger.warning(f"Exception: {w}")
-            else:
-                w = Exception ("No configured outfile format; continuing with default option.")
-                logger.warning(f"Exception: {w}")
 
     # Main arguments NOT in config
     if args.file:
@@ -180,36 +260,48 @@ def main():
     has_commandline_object_args: bool = False
     if args.person:
         has_commandline_object_args = True
-        config['objects']['person'] = str(args.person)
-        for i in range(0, args.person):
-            tracker.entity_stack.append(Person)
+        value, is_valid = is_valid_config_value(args.person, int)
+        if is_valid:
+            persons_to_queue = value
+            config['objects']['person'] = str(persons_to_queue)
+    for i in range(0, persons_to_queue):
+        tracker.entity_stack.append(Person)
 
     if args.location:
         has_commandline_object_args = True
-        config['objects']['location'] = str(args.location)
-        for i in range(0, args.location):
-            tracker.entity_stack.append(Location)
+        value, is_valid = is_valid_config_value(args.location, int)
+        if is_valid:
+            locations_to_queue = value
+            config['objects']['location'] = str(locations_to_queue)
+    for i in range(0, locations_to_queue):
+        tracker.entity_stack.append(Location)
 
     if args.organization:
         has_commandline_object_args = True
-        config['objects']['organization'] = str(args.organization)
-        for i in range(0, args.organization):
-            tracker.entity_stack.append(Organization)
+        value, is_valid = is_valid_config_value(args.organization, int)
+        if is_valid:
+            organizations_to_queue = value
+            config['objects']['organization'] = str(organizations_to_queue)
+    for i in range(0, organizations_to_queue):
+        tracker.entity_stack.append(Organization)
         
     if args.geopolitical:
         has_commandline_object_args = True
-        config['objects']['geopolitical'] = str(args.geopolitical)
-        for i in range(0, args.geopolitical):
-            tracker.entity_stack.append(GeoPoliticalEntity)
+        value, is_valid = is_valid_config_value(args.geopolitical, int)
+        if is_valid:
+            gpes_to_queue = value
+            config['objects']['geopolitical'] = str(gpes_to_queue)
+    for i in range(0, gpes_to_queue):
+        tracker.entity_stack.append(GeoPoliticalEntity)
     
     if args.save_config:
         # Write updated config to file
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
 
-    #Process entities stack by popping off the top factory and creating an entity that is added to the graph
-    if has_commandline_object_args:
-        process_entities_stack(entities, tracker, options_list)
+    # Process entities stack populated by command line or config parsing 
+    # by popping off the top factory and creating an entity that is added to the graph
+    process_entities_stack(entities, tracker, options_list)
 
     # Use the options
     '''Setup Text Menu Interface for Program Operation and Testing'''
@@ -840,10 +932,16 @@ def upsert_entity_option(option: EntityOption, options_list: list[EntityOption])
         options_list.append(option)
 
 def is_valid_results_output_mode(results_output_mode) -> bool:
-    return results_output_mode in OutputMode
+    value, is_valid = is_valid_config_value(results_output_mode, str)
+    if is_valid:
+        return value in OutputMode
+    return is_valid
 
 def is_valid_results_outfile_format(results_outfile_format) -> bool:
-    return results_outfile_format in OutputResultsFileFormat
+    value, is_valid = is_valid_config_value(results_outfile_format, str)
+    if is_valid:
+        return value in OutputResultsFileFormat
+    return is_valid
 
 def get_datetime_filename(file_type: str, file_format: str) -> str:
     # Get current date and time
@@ -851,6 +949,8 @@ def get_datetime_filename(file_type: str, file_format: str) -> str:
 
     # Format the date and time as a string
     formatted_datetime = now.strftime("%Y-%m-%d_%H-%M-%S")
+
+    file_format = file_format.strip(".")
 
     # Create a filename with the formatted date and time
     return f"{file_type}_{formatted_datetime}.{file_format}"
@@ -865,6 +965,13 @@ def get_extension_from_mime(mime_type):
         logger = logging.getLogger(__name__)
         logger.error(f"Error: {e}")
         return None
+
+def is_valid_config_value(value, type) -> tuple[str | int | float | bool, bool]:
+    try:
+        cast_value = type(value)
+        return cast_value, isinstance(cast_value, type)
+    except ValueError:
+        return None, False
 
 def reset_config(defaults: dict) -> None:
     if os.path.exists("config.ini"):

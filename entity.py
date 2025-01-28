@@ -34,7 +34,7 @@ class RelationshipType(Enum):
 @dataclass(frozen=True, kw_only=True)
 class Entity():
     id: uuid.UUID = field(default=None)
-    name: str
+    name: str = field(init=False)
     notes: str = field(default=None)
     attributes: dict[OptionTypes, list[str]] = field(default_factory=dict)
     applicable_option_types: dict[OptionTypes, tuple[int, int]] = field(default_factory=dict)

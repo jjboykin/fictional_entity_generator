@@ -160,6 +160,7 @@ def main():
         # Write initial updated config back to file, if needed
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
+        is_config_updated = False
 
     '''Setup Command Line Argument Parsing'''
     parser = argparse.ArgumentParser(description='Description of your program')
@@ -213,17 +214,21 @@ def main():
 
     # Main arguments in config
     if args.output:
-        if is_valid_results_output_mode(args.output):
-            config['main']['output'] = args.output
-            results_output_mode = OutputMode(args.output)
+        value = str(args.output)
+        if is_valid_results_output_mode(value):
+            config['main']['output'] = value
+            results_output_mode = OutputMode(value)
+            is_config_updated = True
         else:
             w = Exception ("Invalid output mode parameter; continuing with configured option.")
             logger.warning(f"Exception: {w}")
     
     if args.outfile_format:
-        if is_valid_results_outfile_format(args.outfile_format):
-            config['main']['outfile_format'] = args.outfile_format
-            results_outfile_format = OutputResultsFileFormat(args.outfile_format)
+        value = str(args.outfile_format)
+        if is_valid_results_outfile_format(value):
+            config['main']['outfile_format'] = value
+            results_outfile_format = OutputResultsFileFormat(value)
+            is_config_updated = True
         else:
             w = Exception ("Invalid outfile format; continuing with configured option.")
             logger.warning(f"Exception: {w}")
@@ -264,6 +269,7 @@ def main():
         if is_valid:
             persons_to_queue = value
             config['objects']['person'] = str(persons_to_queue)
+            is_config_updated = True
     for i in range(0, persons_to_queue):
         tracker.entity_stack.append(Person)
 
@@ -273,6 +279,7 @@ def main():
         if is_valid:
             locations_to_queue = value
             config['objects']['location'] = str(locations_to_queue)
+            is_config_updated = True
     for i in range(0, locations_to_queue):
         tracker.entity_stack.append(Location)
 
@@ -282,6 +289,7 @@ def main():
         if is_valid:
             organizations_to_queue = value
             config['objects']['organization'] = str(organizations_to_queue)
+            is_config_updated = True
     for i in range(0, organizations_to_queue):
         tracker.entity_stack.append(Organization)
         
@@ -291,10 +299,11 @@ def main():
         if is_valid:
             gpes_to_queue = value
             config['objects']['geopolitical'] = str(gpes_to_queue)
+            is_config_updated = True
     for i in range(0, gpes_to_queue):
         tracker.entity_stack.append(GeoPoliticalEntity)
     
-    if args.save_config:
+    if args.save_config and is_config_updated:
         # Write updated config to file
         with open('config.ini', 'w') as configfile:
             config.write(configfile)
@@ -377,21 +386,21 @@ def main():
                 elif choice == "2":
                     for entity in entities.graph.keys():
                         if isinstance(entity, Location):
-                            display_person(entity)
+                            display_location(entity)
                             print("------------------------------")
                 elif choice == "3":
                     for entity in entities.graph.keys():
                         if isinstance(entity, Organization):
-                            display_person(entity)
+                            display_organization(entity)
                             print("------------------------------")
                 elif choice == "4":
                     for entity in entities.graph.keys():
                         if isinstance(entity, GeoPoliticalEntity):
-                            display_person(entity)
+                            display_gpe(entity)
                             print("------------------------------")
                 elif choice == "5":
                     for entity in entities.graph.keys():
-                        display_person(entity)
+                        display_entity(entity)
                         print("------------------------------")
                 else:
                     print("Invalid choice. Please try again.")
@@ -1043,7 +1052,7 @@ def create_random_location(entities: EntityGraph, options_list: list[EntityOptio
     logger.warning(f"Executing {create_random_location.__name__}...")
     
     applicable_option_types = {
-        OptionTypes.NAME: (1, 2),
+        OptionTypes.NAME: (1, 1),
         OptionTypes.TYPE: (1, 1),
         OptionTypes.CLIMATE: (1, 1),
         OptionTypes.RESOURCES: (1, 2),
@@ -1058,7 +1067,8 @@ def create_random_location(entities: EntityGraph, options_list: list[EntityOptio
     # Generate random entities
     location: Location = factory.create_random_entity(options_list)
     logger.warning(f"Attributes of created Location: {location.attributes}")
-    
+    entities.add(location)
+
     return location
 
 def create_random_organization(entities: EntityGraph, options_list: list[EntityOption]) -> Organization:
@@ -1066,7 +1076,7 @@ def create_random_organization(entities: EntityGraph, options_list: list[EntityO
     logger.warning(f"Executing {create_random_organization.__name__}...")
     
     applicable_option_types = {
-        OptionTypes.NAME: (1, 2),
+        OptionTypes.NAME: (1, 1),
         OptionTypes.TYPE: (1, 1),
         OptionTypes.RELATIONSHIP: (0, 5),
         OptionTypes.ROLE: (1, 2),
@@ -1080,8 +1090,9 @@ def create_random_organization(entities: EntityGraph, options_list: list[EntityO
 
     # Generate random entities
     organization: Organization = factory.create_random_entity(options_list)
-    logger.warning(f"Attributes of created Location: {organization.attributes}")
-    
+    logger.warning(f"Attributes of created Organization: {organization.attributes}")
+    entities.add(organization)
+
     return organization
 
 def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -> GeoPoliticalEntity:
@@ -1089,7 +1100,7 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     logger.warning(f"Executing {create_random_gpe.__name__}...")
     
     applicable_option_types = {
-        OptionTypes.NAME: (1, 2),
+        OptionTypes.NAME: (1, 1),
         OptionTypes.RELATIONSHIP: (0, 10),
         OptionTypes.TYPE: (1, 1),
         OptionTypes.UNIQUE: (0, 2)
@@ -1099,13 +1110,14 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     factory: EntityFactory = EntityFactory(GeoPoliticalEntity, applicable_option_types, options_list)
     logger.warning(f"Factory will create entities of type: {factory.get_entity_type()}")
 
-
     # Generate random entities
-    gpe: GeoPoliticalEntity = factory.create_random_entity(options_list)
+    location = create_random_location(entities, options_list)
+    organization = create_random_organization(entities, options_list)
+    gpe: GeoPoliticalEntity = factory.create_random_entity(options_list, location= location, organization= organization)
     logger.warning(f"Attributes of created Location: {gpe.attributes}")
+    entities.add(gpe)
 
-    gpe.location = create_random_location()
-    gpe.organization = create_random_organization()
+    # TODO: Add relationship between location and orgranization and gpe to graph
     
     return gpe
 
@@ -1113,6 +1125,22 @@ def display_person(person: Person) -> None:
     species: EntityOption = person.attributes[OptionTypes.RACE][0]
     print(f"Person {person.id}: {person.name}, age={person.age}, species={species} sex={person.sex}")
     print(f"Attributes of created Person: {person.attributes}")
+
+def display_location(location: Location) -> None:
+    print(f"Location {location.id}: {location.name}")
+    print(f"Attributes of created Location: {location.attributes}")
+
+def display_organization(organization: Organization) -> None:
+    print(f"Organization {organization.id}: {organization.name}")
+    print(f"Attributes of created Organization: {organization.attributes}")
+
+def display_gpe(gpe: GeoPoliticalEntity) -> None:
+    print(f"Geopolitical {gpe.id}: {gpe.name}")
+    print(f"Attributes of created Geopolitical: {gpe.attributes}")
+
+def display_entity(entity: Entity) -> None:
+    print(f"Entity {entity.id}: {entity.name}")
+    print(f"Attributes of created Entity: {entity.attributes}")
 
 def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, options_list: list[EntityOption]) -> None:
     """
@@ -1133,16 +1161,16 @@ def process_entities_stack(entities: EntityGraph, tracker: EntityTracker, option
         entity_type = tracker.entity_stack.pop()
         if entity_type == Person:    
             person = create_random_person(entities, options_list)
-            #entities.add(person)
+            
         elif entity_type == Location:
             location = create_random_location(entities, options_list)
-            #entities.add(location)
+            
         elif entity_type == Organization:
             organization = create_random_organization(entities, options_list)
-            #entities.add(organization)
+            
         elif entity_type == GeoPoliticalEntity:
             gpe = create_random_gpe(entities, options_list)
-            #entities.add(gpe)
+            
         else:
             raise TypeError(f"Invalid entity type: {entity_type}")
 

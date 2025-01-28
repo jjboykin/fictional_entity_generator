@@ -132,9 +132,9 @@ class EntityGraph(Graph):
     
     def get_node_by_identifier(self, node:Entity) -> Entity:
         for existing_node in self.graph.keys():
-            print(existing_node)
             # Assuming 'name' is the identifier
-            if existing_node.name == node.name:  
+            # #TODO: why does the name comparison not work for org, it should indeed have a name at this point? and why is it using the eq method of EntityOption
+            if existing_node.id == node.id:  
                 return existing_node
         return None
     

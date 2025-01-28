@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from entity import Entity
+#from entity_option import EntityOption, OptionTypes
 
 class OrganizationType(Enum):
     GUILD = 1

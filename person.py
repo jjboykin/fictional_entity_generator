@@ -7,7 +7,6 @@ from entity_option import EntityOption, OptionTypes
 
 @dataclass(frozen=True, kw_only=True)
 class Person(Species):
-    name: str = field(init=False)
     given_name: str = field(default=None)
     middle_names: str = field(default=None)
     family_name: str = field(default=None)

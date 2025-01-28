@@ -67,14 +67,14 @@ class EntityFactory:
             # Some names for certain races
 
         # Select random values for each option type
-            for option_type, count in option_counts.items():
-                selected_options = [opt for opt in self.__options_list if opt.type == option_type] 
-                if option_type != OptionTypes.AGE:   # Don't process AGE a second time
-                    entity_kwargs[option_type] = []  # Initialize an empty list for each option type
-                    if selected_options:
-                        for _ in range(count):
-                            selected_option = random.choices(selected_options, weights=[opt.weight for opt in selected_options], k=1)[0]
-                            entity_kwargs[option_type].append(selected_option)
+        for option_type, count in option_counts.items():
+            selected_options = [opt for opt in self.__options_list if opt.type == option_type] 
+            if option_type != OptionTypes.AGE:   # Don't process AGE a second time
+                entity_kwargs[option_type] = []  # Initialize an empty list for each option type
+                if selected_options:
+                    for _ in range(count):
+                        selected_option = random.choices(selected_options, weights=[opt.weight for opt in selected_options], k=1)[0]
+                        entity_kwargs[option_type].append(selected_option)
                 
         #Create the entity instance
         entity = self.__entity_type(attributes=entity_kwargs, applicable_option_types=self.__applicable_option_types, **kwargs)

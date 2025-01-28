@@ -3,6 +3,7 @@ from entity import Entity
 from location import Location
 from organization import Organization
 from structure import Structure
+#from entity_option import EntityOption, OptionTypes
 
 @dataclass(frozen=True, kw_only=True)
 class GeoPoliticalEntity(Entity):

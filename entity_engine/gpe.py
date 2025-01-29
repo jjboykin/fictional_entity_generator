@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from entity import Entity
-from location import Location
-from organization import Organization
-from structure import Structure
-#from entity_option import EntityOption, OptionTypes
+
+from .entity import Entity
+from .location import Location
+from .organization import Organization
+from .structure import Structure
 
 @dataclass(frozen=True, kw_only=True)
 class GeoPoliticalEntity(Entity):

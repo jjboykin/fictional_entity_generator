@@ -1,3 +1,20 @@
 venv/
 __pycache__/
 app.log
+
+# exclude everything
+data/*
+data/export/*
+data/input/*
+data/log/*
+data/obj/*
+
+# exception to the rule
+!data/export/.gitkeep
+!data/export
+!data/input/.gitkeep
+!data/input
+!data/log/.gitkeep
+!data/log
+!data/obj/.gitkeep
+!data/obj

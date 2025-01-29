@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from entity import Entity
+
+from .entity import Entity
 
 class StructureAttributes(Enum):
     # TODO: Establish possible structure attributes

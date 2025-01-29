@@ -1,7 +1,7 @@
 import random
 
-from entity import Entity
-from entity_option import EntityOption, OptionTypes
+from .entity import Entity
+from .entity_option import EntityOption, OptionTypes
 
 class EntityFactory:
     def __init__(self, entity_type: Entity | str, applicable_option_types: dict[OptionTypes, tuple[int, int]], options_list: list[EntityOption]) -> None:

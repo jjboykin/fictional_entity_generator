@@ -1,6 +1,6 @@
-from graph import Graph
-from entity import Entity
-from static_options import EntityTypes
+from .graph import Graph
+from .entity import Entity
+from .entity_tracker import EntityTypes
 
 class EntityGraph(Graph):
 

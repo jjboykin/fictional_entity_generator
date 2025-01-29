@@ -2,8 +2,8 @@ import random
 from dataclasses import dataclass, field
 from enum import Enum
 
-from species import Species
-from entity_option import EntityOption, OptionTypes
+from .species import Species
+from .entity_option import EntityOption, OptionTypes
 
 @dataclass(frozen=True, kw_only=True)
 class Person(Species):

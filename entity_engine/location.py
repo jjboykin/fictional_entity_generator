@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from entity import Entity
-#from entity_option import EntityOption, OptionTypes
+
+from .entity import Entity
 
 class LocationType(Enum):
     # TODO: Establish possible location types

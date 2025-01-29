@@ -1,23 +1,42 @@
-import os, sys, datetime, csv, json, mimetypes, random
+import os, sys
+
+import datetime, csv, json, mimetypes, random
 import argparse, configparser, logging
 import magic, pickle
 
+from enum import Enum
 from logging.handlers import RotatingFileHandler
 
-from static_options import InputOptionsFileFormat, OutputResultsFileFormat, OutputMode, EntityTypes
-
-from entity import Entity
-from entity_graph import EntityGraph
-from entity_option import EntityOption, OptionTypes, EntityOptionListFlag
-from entity_factory import EntityFactory
-from entity_tracker import EntityTracker
-from species import Species
-from person import Person
-from location import Location
-from organization import Organization
-from gpe import GeoPoliticalEntity
+from entity_engine.entity import Entity
+from entity_engine.entity_graph import EntityGraph
+from entity_engine.entity_option import EntityOption, OptionTypes, EntityOptionListFlag
+from entity_engine.entity_factory import EntityFactory
+from entity_engine.entity_tracker import EntityTracker, EntityTypes
+from entity_engine.species import Species
+from entity_engine.person import Person
+from entity_engine.location import Location
+from entity_engine.organization import Organization
+from entity_engine.gpe import GeoPoliticalEntity
 
 from tests.test_graph import *
+
+class InputOptionsFileFormat(Enum):
+    CSV = "text/csv"
+    JSON = "application/json" 
+
+class OutputResultsFileFormat(Enum):
+    CSV = "text/csv"
+    JSON = "application/json" 
+    MD = "text/markdown"
+    HTML = "text/html"
+
+class OutputMode(Enum):
+    CONSOLE = "console"
+    FILE = "file"
+    CONSOLE_AND_FILE = "cf"
+    #GUI = "gui"
+    #GUI_AND_FILE = "gf"
+    ALL = "all"
 
 def main():
     """
@@ -36,6 +55,7 @@ def main():
     results_outfile_format: OutputResultsFileFormat = OutputResultsFileFormat.MD
     results_output_file_path: str = get_datetime_filename("results", get_extension_from_mime(results_outfile_format.value))
     
+    object_output_dir: str = "data/obj/" 
     object_output_file_path: str = None
     object_input_file_path: str = None
     
@@ -48,6 +68,7 @@ def main():
     is_results_output_mode_updated: bool = False
     is_results_outfile_format_updated: bool = False
     is_persons_to_queue_updated: bool = False
+    should_object_save: bool = False
 
     tracker: EntityTracker = EntityTracker()
     entities: EntityGraph = EntityGraph()
@@ -256,7 +277,9 @@ def main():
         
     if args.save:
         object_output_file_path = get_datetime_filename("objects", "pkl")
+        should_object_save = True
 
+        
     if args.load:
         object_input_file_path = args.load
         # TODO: Load existing objects into memory before generating anymore
@@ -311,6 +334,9 @@ def main():
     # Process entities stack populated by command line or config parsing 
     # by popping off the top factory and creating an entity that is added to the graph
     process_entities_stack(entities, tracker, options_list)
+    if should_object_save:
+        save_object_data(entities, f"entity_{object_output_file_path}")
+        save_object_data(options_list, f"option_{object_output_file_path}")
 
     # Use the options
     '''Setup Text Menu Interface for Program Operation and Testing'''
@@ -340,13 +366,18 @@ def main():
                     menu_page = "config"
                 elif choice == "5":
                     # Save Generated Entities to Object File
-                    save_object_data(entities, f"entity_{object_output_file_path}")
-                    save_object_data(options_list, f"option_{object_output_file_path}")
+                    object_output_file_path = get_datetime_filename("objects", "pkl")
+                    save_object_data(entities, f"{object_output_dir}entity_{object_output_file_path}")
+                    save_object_data(options_list, f"{object_output_dir}option_{object_output_file_path}")
+                    print("Objects saved to file.")
+                    input("Press any key to continue...")
                 elif choice == "6":
                     # TODO: Load Previously Generated Entities
+                    # TODO: Add Not Yet Implemented
                     pass
                 elif choice == "7":
-                    # TODO: Export Generated Entities
+                    # TODO: Export Generated Entities to Markdown, HTML, or PDF
+                    # TODO: Add Not Yet Implemented
                     pass
             case "test":
                 if choice == "1":
@@ -383,25 +414,30 @@ def main():
                         if isinstance(entity, Person):
                             display_person(entity)
                             print("------------------------------")
+                    input("Press any key to continue...")
                 elif choice == "2":
                     for entity in entities.graph.keys():
                         if isinstance(entity, Location):
                             display_location(entity)
                             print("------------------------------")
+                    input("Press any key to continue...")
                 elif choice == "3":
                     for entity in entities.graph.keys():
                         if isinstance(entity, Organization):
                             display_organization(entity)
                             print("------------------------------")
+                    input("Press any key to continue...")
                 elif choice == "4":
                     for entity in entities.graph.keys():
                         if isinstance(entity, GeoPoliticalEntity):
                             display_gpe(entity)
                             print("------------------------------")
+                    input("Press any key to continue...")
                 elif choice == "5":
                     for entity in entities.graph.keys():
                         display_entity(entity)
                         print("------------------------------")
+                    input("Press any key to continue...")
                 else:
                     print("Invalid choice. Please try again.")
             case "config":

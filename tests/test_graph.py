@@ -3,9 +3,9 @@ import os, sys
 parentddir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 sys.path.append(parentddir)
 
-from graph import Graph
-from person import Person
-from entity import RelationshipType
+from src.entity_engine.graph import Graph
+from src.entity_engine.person import Person
+from src.entity_engine.entity import RelationshipType
 
 class TestGraph(unittest.TestCase):
     test_cases = [

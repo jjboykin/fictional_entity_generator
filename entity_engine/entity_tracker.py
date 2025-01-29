@@ -1,6 +1,22 @@
-from entity import Entity
+from .entity import Entity
 
-from static_options import EntityTypes
+from enum import Enum
+
+from .gpe import GeoPoliticalEntity
+from .location import Location
+from .organization import Organization
+from .person import Person
+from .species import Species
+from .structure import Structure
+
+class EntityTypes(Enum):
+    GPE = GeoPoliticalEntity
+    LOCATION = Location
+    ORGANIZATION = Organization
+    PERSON = Person
+    SPECIES = Species
+    STRUCTURE = Structure
+    
 
 class EntityTracker:
     def __init__(self):

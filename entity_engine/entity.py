@@ -2,7 +2,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 
-from entity_option import OptionTypes
+from .entity_option import OptionTypes
 
 class RelationshipType(Enum):
     IS_A = 0

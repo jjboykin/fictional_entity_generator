@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from entity import Entity
-from entity_option import EntityOption, OptionTypes
+
+from .entity import Entity
+from .entity_option import EntityOption, OptionTypes
 
 class SpeciesAttributes(Enum):
     # TODO: Establish possible species attributes

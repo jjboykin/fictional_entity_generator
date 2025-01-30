@@ -373,11 +373,13 @@ def main():
                     input("Press any key to continue...")
                 elif choice == "6":
                     # TODO: Load Previously Generated Entities
-                    # TODO: Add Not Yet Implemented
+                    print("Not Yet Implemented.")
+                    input("Press any key to continue...")
                     pass
                 elif choice == "7":
                     # TODO: Export Generated Entities to Markdown, HTML, or PDF
-                    # TODO: Add Not Yet Implemented
+                    print("Not Yet Implemented.")
+                    input("Press any key to continue...")
                     pass
             case "test":
                 if choice == "1":

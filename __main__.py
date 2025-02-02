@@ -1154,8 +1154,9 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     gpe: GeoPoliticalEntity = factory.create_random_entity(options_list, location= location, organization= organization)
     logger.warning(f"Attributes of created Location: {gpe.attributes}")
     entities.add(gpe)
-
-    # TODO: Add relationship between location and orgranization and gpe to graph
+    entities.add_reciprocal_pair(location, organization)
+    entities.add_edge(location, gpe)
+    entities.add_edge(organization, gpe)
     
     return gpe
 

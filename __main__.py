@@ -277,6 +277,8 @@ def main():
     if args.load:
         object_input_file_path = args.load
         # TODO: Load existing objects into memory before generating anymore
+        entities = load_object_data(f"{object_output_dir}entity_{object_input_file_path}")
+        options_list = load_object_data(f"{object_output_dir}option_{object_input_file_path}")
 
     # Object arguments in config
     has_commandline_object_args: bool = False
@@ -367,7 +369,12 @@ def main():
                     input("Press any key to continue...")
                 elif choice == "6":
                     # TODO: Load Previously Generated Entities
-                    print("Not Yet Implemented.")
+                    # search for valid files in object directory
+                    #   if only one load that one
+                    #   else if greater than one, list them to choose
+                    # object_input_file_path = selected file pair
+                    entities = load_object_data(f"{object_output_dir}entity_{object_input_file_path}")
+                    options_list = load_object_data(f"{object_output_dir}option_{object_input_file_path}")
                     input("Press any key to continue...")
                     pass
                 elif choice == "7":
@@ -1043,6 +1050,20 @@ def save_object_data(data, file_path: str) -> None:
     with open(file_path, "wb") as file:
         # Dump the object to the file
         pickle.dump(data, file)
+
+def load_object_data(file_path: str):
+    """Load object data from pickle """
+
+    try:
+        with open(file_path, "rb") as file:
+            data = pickle.load(file)
+            return data
+    except FileNotFoundError:
+        print(f"Error: File not found at {file_path}")
+        return None
+    except Exception as e:
+         print(f"An error occurred: {e}")
+         return None
 
 def create_random_person(entities: EntityGraph, options_list: list[EntityOption]) -> Person:
     logger = logging.getLogger(__name__)

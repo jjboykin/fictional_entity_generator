@@ -1,7 +1,6 @@
-from .entity import Entity
-
 from enum import Enum
 
+from .entity import Entity
 from .gpe import GeoPoliticalEntity
 from .location import Location
 from .organization import Organization

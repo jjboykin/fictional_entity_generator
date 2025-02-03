@@ -1,4 +1,6 @@
-class WeightedDirectedGraph:
+from .graph import Graph
+
+class WeightedDirectedGraph(Graph):
     def __init__(self):
         self.graph = {}  # Dictionary where keys are nodes and values are lists of connected edges
 

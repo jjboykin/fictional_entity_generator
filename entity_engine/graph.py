@@ -14,11 +14,11 @@ class Graph:
 
     def add_edge(self, node1, node2) -> None:
         if node1 in self.graph:
-            self.graph[node1].add(node2)
+            self.graph[node1].append(node2)
         else:
             self.graph[node1] = {node2}
         if node2 in self.graph:
-            self.graph[node2].add(node1)
+            self.graph[node2].append(node1)
         else:
             self.graph[node2] = {node1}
 

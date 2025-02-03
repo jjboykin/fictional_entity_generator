@@ -7,16 +7,10 @@ import magic, pickle
 from enum import Enum
 from logging.handlers import RotatingFileHandler
 
-from entity_engine.entity import Entity
-from entity_engine.entity_graph import EntityGraph
-from entity_engine.entity_option import EntityOption, OptionTypes, EntityOptionListFlag
-from entity_engine.entity_factory import EntityFactory
-from entity_engine.entity_tracker import EntityTracker, EntityTypes
-from entity_engine.species import Species
-from entity_engine.person import Person
-from entity_engine.location import Location
-from entity_engine.organization import Organization
-from entity_engine.gpe import GeoPoliticalEntity
+from entity_engine import Entity, EntityTypes
+from entity_engine import EntityOption, OptionTypes, EntityOptionListFlag
+from entity_engine import EntityGraph, EntityFactory, EntityTracker
+from entity_engine import Person, Location, Organization, GeoPoliticalEntity
 
 from tests.test_graph import *
 
@@ -1154,7 +1148,7 @@ def create_random_gpe(entities: EntityGraph, options_list: list[EntityOption]) -
     gpe: GeoPoliticalEntity = factory.create_random_entity(options_list, location= location, organization= organization)
     logger.warning(f"Attributes of created Location: {gpe.attributes}")
     entities.add(gpe)
-    entities.add_reciprocal_pair(location, organization)
+    entities.add_edge(location, organization)
     entities.add_edge(location, gpe)
     entities.add_edge(organization, gpe)
     

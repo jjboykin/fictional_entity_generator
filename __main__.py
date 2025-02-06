@@ -51,7 +51,6 @@ def main():
     
     object_output_dir: str = "data/obj/" 
     object_output_file_path: str = None
-    object_input_file_path: str = None
     
     persons_to_queue: int = 1
     locations_to_queue: int = 0
@@ -275,10 +274,18 @@ def main():
 
         
     if args.load:
-        object_input_file_path = args.load
-        # TODO: Load existing objects into memory before generating anymore
-        entities = load_object_data(f"{object_output_dir}entity_{object_input_file_path}")
-        options_list = load_object_data(f"{object_output_dir}option_{object_input_file_path}")
+        load = str(input("Doing this will overwrite any unsaved entities created this session. Are you sure? (y/n)"))
+        if load.lower == "y":
+            try:
+                entities, loaded_options_list = load_previously_generated_entities(object_output_dir) 
+                if loaded_options_list:
+                    options_list = loaded_options_list
+
+                print("Loaded previously generated entities and options.")
+            except FileNotFoundError as e:
+                logger.warning(f"No saved entities found: {e}")
+            except ValueError as e:
+                logger.warning(f"Error loading entities: {e}")
 
     # Object arguments in config
     has_commandline_object_args: bool = False
@@ -368,20 +375,24 @@ def main():
                     print("Objects saved to file.")
                     input("Press any key to continue...")
                 elif choice == "6":
-                    # TODO: Load Previously Generated Entities
-                    # search for valid files in object directory
-                    #   if only one load that one
-                    #   else if greater than one, list them to choose
-                    # object_input_file_path = selected file pair
-                    entities = load_object_data(f"{object_output_dir}entity_{object_input_file_path}")
-                    options_list = load_object_data(f"{object_output_dir}option_{object_input_file_path}")
-                    input("Press any key to continue...")
-                    pass
+                    load = str(input("Doing this will overwrite any unsaved entities created this session. Are you sure? (y/n)"))
+                    if load.lower == "y":
+                        try:
+                            entities, loaded_options_list = load_previously_generated_entities(object_output_dir) 
+                            if loaded_options_list:
+                                options_list = loaded_options_list
+
+                            print("Loaded previously generated entities and options.")
+                        except FileNotFoundError as e:
+                            logger.warning(f"No saved entities found: {e}")
+                        except ValueError as e:
+                            logger.warning(f"Error loading entities: {e}")
+
+                        input("Press any key to continue...")
                 elif choice == "7":
                     # TODO: Export Generated Entities to Markdown, HTML, or PDF
                     print("Not Yet Implemented.")
                     input("Press any key to continue...")
-                    pass
             case "test":
                 if choice == "1":
                     test_graph_with_person()
@@ -1052,18 +1063,121 @@ def save_object_data(data, file_path: str) -> None:
         pickle.dump(data, file)
 
 def load_object_data(file_path: str):
-    """Load object data from pickle """
+    """
+    Loads a Python object from a pickle file.
+
+    Args:
+        filepath: Path to the pickle file.
+
+    Returns:
+        The loaded Python object.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        Exception: If an error occurs during loading.
+    """
+
+    logger = logging.getLogger(__name__)
 
     try:
         with open(file_path, "rb") as file:
-            data = pickle.load(file)
-            return data
+            return pickle.load(file)
     except FileNotFoundError:
-        print(f"Error: File not found at {file_path}")
+        logger.error(f"File not found at {file_path}")
         return None
     except Exception as e:
-         print(f"An error occurred: {e}")
+         logger.error(f"Error loading data from {file_path}: {e}")
          return None
+
+def load_previously_generated_entities(object_output_dir: str) -> tuple[EntityGraph, list[EntityOption]]:
+    """
+    Loads previously generated entities and options from files.
+
+    Args:
+        object_output_dir: Directory where the entity and option files are stored.
+
+    Returns:
+        A tuple containing the loaded EntityGraph and list of EntityOption objects.
+
+    Raises:
+        FileNotFoundError: If no valid files are found in the directory.
+        ValueError: If multiple files are found and no selection is made.
+    """
+    logger = logging.getLogger(__name__)
+
+    entity_files = []
+    option_files = []
+    entities: EntityGraph = None
+    options_list: list[EntityOption] = None
+
+    # Find entity and option files in the directory
+    for filename in os.listdir(object_output_dir):
+        if filename.startswith("entity_") and filename.endswith(".pkl"):
+            entity_files.append(filename)
+        elif filename.startswith("option_") and filename.endswith(".pkl"):
+            option_files.append(filename)
+
+    # Check if any files were found
+    if not entity_files:
+        logger.error(f"No valid entity file found in {object_output_dir}...starting a fresh entity file.")
+
+    if not option_files:
+        logger.error(f"No valid option file found in {object_output_dir}...using default options.")
+
+    if not entity_files and not option_files:
+        logger.error(f"No valid entity or option files found in {object_output_dir}...using default options to start a fresh entity file.")
+        return None
+
+    # If only one pair of files, load them directly
+    if len(entity_files) == 1 and len(option_files) == 1:
+        entity_file = os.path.join(object_output_dir, entity_files[0])
+        option_file = os.path.join(object_output_dir, option_files[0])
+        return load_object_data(entity_file), load_object_data(option_file)
+
+    # If multiple pairs, present the user with a choice for each file
+    print("Multiple saved object files found...")
+
+    # Entity file choice
+    print("Select the entity file you wish to load:")
+    for i, (entity_file) in enumerate(entity_files):
+        print(f"{i+1}. {entity_file}")
+
+    while True:
+        try:
+            choice = int(input("Enter the number of the set to load (or 0 for default): "))
+            if choice == 0:
+                logger.warn("Entity file load canceled.")
+                break
+            elif 1 <= choice <= len(entity_files):
+                entity_file = os.path.join(object_output_dir, entity_files[choice - 1])
+                entities = load_object_data(entity_file)
+                break
+            else:
+                print("Invalid choice. Please enter a number within the valid range.")
+        except ValueError as e:
+            print(e)
+
+    # Option file choice
+    print("Select the options file you wish to load:")
+    for i, (option_file) in enumerate(option_files):
+        print(f"{i+1}. {option_file}")
+
+    while True:
+        try:
+            choice = int(input("Enter the number of the set to load (or 0 for default): "))
+            if choice == 0:
+                logger.warn("Option file load canceled.")
+                break
+            elif 1 <= choice <= len(entity_files):
+                option_file = os.path.join(object_output_dir, option_files[choice - 1])
+                options_list = load_object_data(option_file)
+                break
+            else:
+                print("Invalid choice. Please enter a number within the valid range.")
+        except ValueError as e:
+            print(e)
+    
+    return entities, options_list
 
 def create_random_person(entities: EntityGraph, options_list: list[EntityOption]) -> Person:
     logger = logging.getLogger(__name__)
